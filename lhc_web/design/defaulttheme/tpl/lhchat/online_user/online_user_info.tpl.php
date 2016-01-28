@@ -10,7 +10,9 @@
 <?php if (!empty($online_user->identifier)) : ?><br/><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/onlineusers','Identifier');?> - <?php echo htmlspecialchars($online_user->identifier)?><?php endif;?>
 </p>
 
-<?php if ($online_user->online_attr != '') : ?>
+<?php
+var_dump($online_user);
+ if ($online_user->online_attr != '') : ?>
 <h5><?php echo erTranslationClassLhTranslation::getInstance()->getTranslation('chat/onlineusers','Additional information')?></h5>
 <p class="fs11">
 <?php echo nl2br(htmlspecialchars($online_user->online_attr));?>
