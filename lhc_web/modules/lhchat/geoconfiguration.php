@@ -1,5 +1,7 @@
 <?php
 
+$response = erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.geoconfiguration', array());
+
 $tpl = erLhcoreClassTemplate::getInstance( 'lhchat/geoconfiguration.tpl.php');
 
 $geoData = erLhcoreClassModelChatConfig::fetch('geo_data');
@@ -18,6 +20,9 @@ if ( isset($_POST['store_map']) ) {
 			),
 			'lng' => new ezcInputFormDefinitionElement(
 					ezcInputFormDefinitionElement::OPTIONAL, 'float'
+			),
+			'gmaps_api_key' => new ezcInputFormDefinitionElement(
+					ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw'
 			)
 	);
 
@@ -35,6 +40,12 @@ if ( isset($_POST['store_map']) ) {
 		$dataLocation['zoom'] = $form->zoom;
 	} else {
 		$dataLocation['zoom'] = 3;
+	}
+
+	if ( $form->hasValidData( 'gmaps_api_key' )) {
+		$dataLocation['gmaps_api_key'] = $form->gmaps_api_key;
+	} else {
+		$dataLocation['gmaps_api_key'] = '';
 	}
 
 	if ( $form->hasValidData( 'lat' )) {

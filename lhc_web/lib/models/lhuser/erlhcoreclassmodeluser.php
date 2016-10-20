@@ -3,27 +3,38 @@
 class erLhcoreClassModelUser {
 
     public function getState()
-   {
-       return array(
-               'id'              => $this->id,
-               'username'        => $this->username,
-               'password'        => $this->password,
-               'email'           => $this->email,
-               'name'            => $this->name,
-               'surname'         => $this->surname,
-               'disabled'        => $this->disabled,
-               'hide_online'     => $this->hide_online,
-               'all_departments' => $this->all_departments,
-               'filepath'     	 => $this->filepath,
-			   'filename'     	 => $this->filename,
-			   'skype'     	 	 => $this->skype,
-			   'job_title'     	 => $this->job_title,
-			   'time_zone'     	 => $this->time_zone,
-			   'invisible_mode'  => $this->invisible_mode,
-			   'xmpp_username'   => $this->xmpp_username,
-       );
+    {
+        return array(
+            'id' => $this->id,
+            'username' => $this->username,
+            'password' => $this->password,
+            'email' => $this->email,
+            'name' => $this->name,
+            'surname' => $this->surname,
+            'disabled' => $this->disabled,
+            'hide_online' => $this->hide_online,
+            'all_departments' => $this->all_departments,
+            'filepath' => $this->filepath,
+            'filename' => $this->filename,
+            'skype' => $this->skype,
+            'job_title' => $this->job_title,
+            'time_zone' => $this->time_zone,
+            'invisible_mode' => $this->invisible_mode,
+            'xmpp_username' => $this->xmpp_username,
+            'rec_per_req' => $this->rec_per_req,
+            'session_id' => $this->session_id,
+            'active_chats_counter' => $this->active_chats_counter,
+            'closed_chats_counter' => $this->closed_chats_counter,
+            'pending_chats_counter' => $this->pending_chats_counter,
+            'departments_ids' => $this->departments_ids,
+            'chat_nickname' => $this->chat_nickname,
+            'attr_int_1' => $this->attr_int_1,
+            'attr_int_2' => $this->attr_int_2,
+            'attr_int_3' => $this->attr_int_3,
+            'operation_admin' => $this->operation_admin
+        );
    }
-
+      
    public function setState( array $properties )
    {
        foreach ( $properties as $key => $val )
@@ -34,9 +45,15 @@ class erLhcoreClassModelUser {
 
    public function setPassword($password)
    {
-       $cfgSite = erConfigClassLhConfig::getInstance();
-	   $secretHash = $cfgSite->getSetting( 'site', 'secrethash' );
-       $this->password = sha1($password.$secretHash.sha1($password));
+		
+		$hash = password_hash($password, PASSWORD_DEFAULT);
+       
+		if ($hash) {
+			$this->password = $hash;
+		} else {
+			return false;
+		}		
+       
    }
 
    public static function fetch($user_id, $useCache = false)
@@ -95,7 +112,11 @@ class erLhcoreClassModelUser {
        switch ($param) {
 
        	case 'name_support':
-       			return trim($this->name.' '.$this->surname);
+       			return $this->chat_nickname != '' ? trim($this->chat_nickname) : trim($this->name_official);
+       		break;
+
+       	case 'name_official':
+       			return $this->name_official = trim($this->name.' '.$this->surname);
        		break;
 
        	case 'user_groups_id':
@@ -127,7 +148,7 @@ class erLhcoreClassModelUser {
        	    break;
 
        	case 'photo_path':
-       			$this->photo_path = erLhcoreClassSystem::instance()->wwwDir() .'/'. $this->filepath . $this->filename;
+       			$this->photo_path = ($this->filepath != '' ? erLhcoreClassSystem::instance()->wwwDir() : erLhcoreClassSystem::instance()->wwwImagesDir() ) .'/'. $this->filepath . $this->filename;
        			return $this->photo_path;
        		break;
 
@@ -174,7 +195,7 @@ class erLhcoreClassModelUser {
 
    public static function getUserList($paramsSearch = array())
    {
-       $paramsDefault = array('limit' => 32, 'offset' => 0);
+       $paramsDefault = array('limit' => 500000, 'offset' => 0);
 
        $params = array_merge($paramsDefault,$paramsSearch);
 
@@ -316,20 +337,52 @@ class erLhcoreClassModelUser {
    }
 
    public function removeFile()
-   {
-	   	if ($this->filepath != '') {
+   {   		   	
+	   	if ($this->filename != '') {
 	   		if ( file_exists($this->filepath . $this->filename) ) {
 	   			unlink($this->filepath . $this->filename);
 	   		}
 
-	   		erLhcoreClassFileUpload::removeRecursiveIfEmpty('var/userphoto/',str_replace('var/userphoto/','',$this->filepath));
-
+	   		if ($this->filepath != '') {
+	   			erLhcoreClassFileUpload::removeRecursiveIfEmpty('var/userphoto/',str_replace('var/userphoto/','',$this->filepath));
+	   		}
+	   		
+	   		erLhcoreClassChatEventDispatcher::getInstance()->dispatch('user.remove_photo', array('user' => & $this));
+	   		
 	   		$this->filepath = '';
 	   		$this->filename = '';
 	   		$this->saveThis();
 	   	}
    }
 
+	public function setUserGroups() {
+   		
+		erLhcoreClassModelGroupUser::removeUserFromGroups($this->id);
+		
+		foreach ($this->user_groups_id as $group_id) {
+			$groupUser = new erLhcoreClassModelGroupUser();
+			$groupUser->group_id = $group_id;
+			$groupUser->user_id = $this->id;
+			$groupUser->saveThis();
+		}
+		
+   	}
+   
+   	public static function findOne($paramsSearch = array()) {
+   		
+   		$paramsSearch['limit'] = 1;
+   		
+   		$list = self::getUserList($paramsSearch);
+   		
+   		if (! empty($list)) {
+   			reset($list);
+   			return current($list);
+   		}
+   	
+   		return false;
+   		
+   	}   	
+   	
     public $id = null;
     public $username = '';
     public $password = '';
@@ -339,6 +392,7 @@ class erLhcoreClassModelUser {
     public $filename = '';
     public $surname = '';
     public $job_title = '';
+    public $departments_ids = '';
     public $skype = '';
     public $xmpp_username = '';
     public $disabled = 0;
@@ -346,6 +400,17 @@ class erLhcoreClassModelUser {
     public $all_departments = 0;
     public $invisible_mode = 0;
     public $time_zone = '';
+    public $rec_per_req = '';
+    public $session_id = '';
+    public $chat_nickname = '';
+    public $active_chats_counter = 0;
+    public $closed_chats_counter = 0;
+    public $pending_chats_counter = 0;
+    public $operation_admin = '';
+    
+    public $attr_int_1 = 0;
+    public $attr_int_2 = 0;
+    public $attr_int_3 = 0;
 }
 
 ?>

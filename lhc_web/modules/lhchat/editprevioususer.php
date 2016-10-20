@@ -10,9 +10,11 @@ try {
 		if (isset($lastMessage['msg'])) {
 			
 			$array['id'] = $lastMessage['id'];
-			$array['msg'] = $lastMessage['msg'];
+			$array['msg'] = preg_replace('#\[translation\](.*?)\[/translation\]#is', '', $lastMessage['msg']);
 			$array['error'] = 'f';
-			
+
+            erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.before_edit_previous_user_returned',array('response' => & $array));
+
 			echo json_encode($array);	
 			exit;		
 		};

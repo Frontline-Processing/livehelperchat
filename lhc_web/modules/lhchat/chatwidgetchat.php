@@ -16,6 +16,7 @@ if (isset($Params['user_parameters_unordered']['theme']) && (int)$Params['user_p
 	try {
 		$theme = erLhAbstractModelWidgetTheme::fetch($Params['user_parameters_unordered']['theme']);
 		$Result['theme'] = $theme;
+		$tpl->set('theme',$theme);
 		$modeAppend .= '/(theme)/'.$theme->id;
 	} catch (Exception $e) {
 
@@ -30,11 +31,22 @@ if ($Params['user_parameters_unordered']['cstarted'] !== null && $Params['user_p
 	$Result['parent_messages'][] = 'lh_callback:' . (string)strip_tags($Params['user_parameters_unordered']['cstarted']);
 }
 
+
+
 try {
 
     $chat = erLhcoreClassChat::getSession()->load( 'erLhcoreClassModelChat', $Params['user_parameters']['chat_id']);
+
     erLhcoreClassChat::setTimeZoneByChat($chat);
-    
+ 
+    if (is_numeric($Params['user_parameters_unordered']['pchat'])) {
+        erLhcoreClassChatPaid::openChatWidget(array(
+            'tpl' => & $tpl,
+            'pchat' => $Params['user_parameters_unordered']['pchat'],
+            'chat' => $chat
+        ));
+    }
+
     if ($chat->hash == $Params['user_parameters']['hash'])
     {
         $tpl->set('chat_id',$Params['user_parameters']['chat_id']);
@@ -42,7 +54,8 @@ try {
         $tpl->set('chat',$chat);
         $tpl->set('chat_widget_mode',true);
         $tpl->set('chat_embed_mode',$embedMode);
-
+        $tpl->set('survey',is_numeric($Params['user_parameters_unordered']['survey']) ? (int)$Params['user_parameters_unordered']['survey'] : false);
+                
         $Result['chat'] = $chat;
 
         // User online
@@ -55,9 +68,20 @@ try {
 	        	$chat->user_typing = time();// Show for shorter period these status messages
 	        	$chat->is_user_typing = 1;
 	        	if (isset($_SERVER['HTTP_REFERER']) && $_SERVER['HTTP_REFERER'] != ''){
-	        		$chat->user_typing_txt = $_SERVER['HTTP_REFERER'];
+	        	    
+	        	    $refererSite = $_SERVER['HTTP_REFERER'];
+	        	    
+	        	    if ($refererSite != '' && strlen($refererSite) > 50) {
+	        	        if ( function_exists('mb_substr') ) {
+	        	            $refererSite = mb_substr($refererSite, 0, 50);
+	        	        } else {
+	        	            $refererSite = substr($refererSite, 0, 50);
+	        	        }
+	        	    }
+	        	    
+	        		$chat->user_typing_txt = $refererSite;
 	        	} else {
-	        		$chat->user_typing_txt = htmlspecialchars_decode(erTranslationClassLhTranslation::getInstance()->getTranslation('chat/userjoined','User has joined the chat!'),ENT_QUOTES);
+	        		$chat->user_typing_txt = htmlspecialchars_decode(erTranslationClassLhTranslation::getInstance()->getTranslation('chat/userjoined','Visitor has joined the chat!'),ENT_QUOTES);
 	        	}
 	        	
 	        	if ($chat->user_status == erLhcoreClassModelChat::USER_STATUS_PENDING_REOPEN && ($onlineuser = $chat->online_user) !== false) {
@@ -71,6 +95,7 @@ try {
         	$db->commit();
         };
 
+        erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.chatwidgetchat',array('result' => & $Result , 'tpl' => & $tpl, 'params' => & $Params, 'chat' => & $chat));
     } else {
         $tpl->setFile( 'lhchat/errors/chatnotexists.tpl.php');
     }
@@ -78,7 +103,13 @@ try {
 } catch(Exception $e) {
    $tpl->setFile('lhchat/errors/chatnotexists.tpl.php');
 }
-
+if (isset($Params['user_parameters_unordered']['fullheight']) && $Params['user_parameters_unordered']['fullheight'] == 'true') {
+    $Result['fullheight'] = true;
+    $tpl->set('fullheight', true);
+} else {
+    $Result['fullheight'] = false;
+    $tpl->set('fullheight', false);
+}
 $Result['content'] = $tpl->fetch();
 $Result['pagelayout'] = 'widget';
 $Result['pagelayout_css_append'] = 'widget-chat';

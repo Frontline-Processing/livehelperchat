@@ -18,10 +18,12 @@ if ( erLhcoreClassChat::hasAccessToRead($chat) )
 	if ($userData->invisible_mode == 0) {	
 		
 		$operatorAccepted = false;
-		    
+		$chatDataChanged = false;
+		
 	    if ($chat->user_id == 0) {
 	        $currentUser = erLhcoreClassUser::instance();
-	        $chat->user_id = $currentUser->getUserID();	        
+	        $chat->user_id = $currentUser->getUserID();	     
+	        $chatDataChanged = true;
 	    }
 	    
 	    // If status is pending change status to active
@@ -34,11 +36,39 @@ if ( erLhcoreClassChat::hasAccessToRead($chat) )
 	    	
 	    	$chat->user_id = $currentUser->getUserID();
 	    	$operatorAccepted = true;
+	    	$chatDataChanged = true;
 	    }
 	    
+	    if ($chat->support_informed == 0 || $chat->has_unread_messages == 1 ||  $chat->unread_messages_informed == 1) {
+	    	$chatDataChanged = true;
+	    }
+	    
+	    // Store who has acceped a chat so other operators will be able easily indicate this
+	    if ($operatorAccepted == true) {
+	    	         	        
+	        $msg = new erLhcoreClassModelmsg();
+	        $msg->msg = (string)$currentUser->getUserData(true)->name_support.' '.erTranslationClassLhTranslation::getInstance()->getTranslation('chat/adminchat','has accepted the chat!');
+	        $msg->chat_id = $chat->id;
+	        $msg->user_id = -1;
+	        $msg->time = time();
+	        	       
+	        if ($chat->last_msg_id < $msg->id) {
+	            $chat->last_msg_id = $msg->id;
+	        }
+
+	        erLhcoreClassChat::getSession()->save($msg);
+	    }
+	    
+	    // Update general chat attributes
 	    $chat->support_informed = 1;
 	    $chat->has_unread_messages = 0;
 	    $chat->unread_messages_informed = 0;
+
+	    if ($chat->unanswered_chat == 1 && $chat->user_status == erLhcoreClassModelChat::USER_STATUS_JOINED_CHAT)
+	    {
+	        $chat->unanswered_chat = 0;
+	    }
+
 	    erLhcoreClassChat::getSession()->update($chat);
 		
 	    echo $tpl->fetch();	  
@@ -49,9 +79,18 @@ if ( erLhcoreClassChat::hasAccessToRead($chat) )
 	    	fastcgi_finish_request();
 	    };
 	    
+	    if ($chatDataChanged == true) {
+	    	erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.data_changed',array('chat' => & $chat,'user' => $currentUser));
+	    }
+	    
 	    if ($operatorAccepted == true) {	 	    	
 	    	erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.accept',array('chat' => & $chat,'user' => $currentUser));	    	
-	    	erLhcoreClassChat::updateActiveChats($chat->user_id);	    	
+	    	erLhcoreClassChat::updateActiveChats($chat->user_id);	
+
+	    	if ($chat->department !== false) {
+	    	    erLhcoreClassChat::updateDepartmentStats($chat->department);
+	    	}
+	    	
 	    	erLhcoreClassChatWorkflow::presendCannedMsg($chat);
 	    	$options = $chat->department->inform_options_array;
 	    	erLhcoreClassChatWorkflow::chatAcceptedWorkflow(array('department' => $chat->department,'options' => $options),$chat);

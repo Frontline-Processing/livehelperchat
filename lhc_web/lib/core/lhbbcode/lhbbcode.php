@@ -50,12 +50,18 @@ class erLhcoreClassBBCode
     	// And replace them by...
     	$out = self::getOutArray();
     	
+    	$in[] = '[/*]';
+    	$in[] = '[*]';
+    	$out[] = '</li>';
+    	$out[] = '<li>';
+    	    	
     	$text = str_replace($in, $out, $text);
 
     	// BBCode to find...
     	$in = array( 	 '/\[b\](.*?)\[\/b\]/ms',
     					 '/\[i\](.*?)\[\/i\]/ms',
     					 '/\[u\](.*?)\[\/u\]/ms',
+    					 '/\[s\](.*?)\[\/s\]/ms',
     					 '/\[list\=(.*?)\](.*?)\[\/list\]/ms',
     					 '/\[list\](.*?)\[\/list\]/ms',
     					 '/\[\*\]\s?(.*?)\n/ms'
@@ -64,6 +70,7 @@ class erLhcoreClassBBCode
     	$out = array(	 '<strong>\1</strong>',
     					 '<em>\1</em>',
     					 '<u>\1</u>',
+    					 '<strike>\1</strike>',
     					 '<ol start="\1">\2</ol>',
     					 '<ul>\1</ul>',
     					 '<li>\1</li>'
@@ -297,14 +304,19 @@ class erLhcoreClassBBCode
 
    // From WP :)
    public static function make_clickable($ret) {
-    	$ret = ' ' . $ret;
-    	// in testing, using arrays here was found to be faster
-    	$ret = preg_replace_callback('#(?<!=[\'"])(?<=[*\')+.,;:!&$\s>])(\()?([\w]+?://(?:[\w\\x80-\\xff\#%~/?@\[\]-]|[\'*(+.,;:!=&$](?![\b\)]|(\))?([\s]|$))|(?(1)\)(?![\s<.,;:]|$)|\)))+)#is', 'erLhcoreClassBBCode::_make_url_clickable_cb', $ret);
-    	$ret = preg_replace_callback('#([\s>])((www|ftp)\.[\w\\x80-\\xff\#$%&~/.\-;:=,?@\[\]+]+)#is', 'erLhcoreClassBBCode::_make_web_ftp_clickable_cb', $ret);
-    	$ret = preg_replace_callback('#([\s>])([.0-9a-z_+-]+)@(([0-9a-z-]+\.)+[0-9a-z]{2,})#i', 'erLhcoreClassBBCode::_make_email_clickable_cb', $ret);
+       $ret = ' ' . $ret;
 
-    	// this one is not in an array because we need it to run last, for cleanup of accidental links within links
-    	$ret = preg_replace("#(<a( [^>]+?>|>))<a [^>]+?>([^>]+?)</a></a>#i", "$1$3</a>", $ret);
+        $makeLinksClickable = true;
+        erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.before_make_clickable',array('msg' => & $ret, 'makeLinksClickable' => & $makeLinksClickable));
+
+        if ($makeLinksClickable) {
+            // in testing, using arrays here was found to be faster
+            $ret = preg_replace_callback('#(?<!=[\'"])(?<=[*\')+.,;:!&$\s>])(\()?([\w]+?://(?:[\w\\x80-\\xff\#%~/?@\[\]-]|[\'*(+.,;:!=&$](?![\b\)]|(\))?([\s]|$))|(?(1)\)(?![\s<.,;:]|$)|\)))+)#is', 'erLhcoreClassBBCode::_make_url_clickable_cb', $ret);
+            $ret = preg_replace_callback('#([\s>])((www|ftp)\.[\w\\x80-\\xff\#$%&~/.\-;:=,?@\[\]+]+)#is', 'erLhcoreClassBBCode::_make_web_ftp_clickable_cb', $ret);
+            $ret = preg_replace_callback('#([\s>])([.0-9a-z_+-]+)@(([0-9a-z-]+\.)+[0-9a-z]{2,})#i', 'erLhcoreClassBBCode::_make_email_clickable_cb', $ret);
+            // this one is not in an array because we need it to run last, for cleanup of accidental links within links
+            $ret = preg_replace("#(<a( [^>]+?>|>))<a [^>]+?>([^>]+?)</a></a>#i", "$1$3</a>", $ret);
+        }
 
     	$ret = self::BBCode2Html($ret);
 
@@ -314,11 +326,14 @@ class erLhcoreClassBBCode
     	// Youtube block
     	$ret = preg_replace_callback('#\[youtube\](.*?)\[/youtube\]#is', 'erLhcoreClassBBCode::_make_youtube_block', $ret);
 
+    	$ret = preg_replace('#\[translation\](.*?)\[/translation\]#is', '<span class="tr-msg">$1</span>', $ret);
+
     	// File block
     	$ret = preg_replace_callback('#\[file="?(.*?)"?\]#is', 'erLhcoreClassBBCode::_make_url_file', $ret);
 
-
     	$ret = trim($ret);
+
+        erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.after_make_clickable',array('msg' => & $ret));
     	return $ret;
    }
 

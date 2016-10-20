@@ -45,10 +45,20 @@ $def->properties['dep_id']->columnName   = 'dep_id';
 $def->properties['dep_id']->propertyName = 'dep_id';
 $def->properties['dep_id']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
 
+$def->properties['product_id'] = new ezcPersistentObjectProperty();
+$def->properties['product_id']->columnName   = 'product_id';
+$def->properties['product_id']->propertyName = 'product_id';
+$def->properties['product_id']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
+
 $def->properties['user_status'] = new ezcPersistentObjectProperty();
 $def->properties['user_status']->columnName   = 'user_status';
 $def->properties['user_status']->propertyName = 'user_status';
 $def->properties['user_status']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
+
+$def->properties['user_closed_ts'] = new ezcPersistentObjectProperty();
+$def->properties['user_closed_ts']->columnName   = 'user_closed_ts';
+$def->properties['user_closed_ts']->propertyName = 'user_closed_ts';
+$def->properties['user_closed_ts']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
 
 $def->properties['support_informed'] = new ezcPersistentObjectProperty();
 $def->properties['support_informed']->columnName   = 'support_informed';
@@ -223,6 +233,11 @@ $def->properties['wait_timeout_send']->columnName   = 'wait_timeout_send';
 $def->properties['wait_timeout_send']->propertyName = 'wait_timeout_send';
 $def->properties['wait_timeout_send']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
 
+$def->properties['wait_timeout_repeat'] = new ezcPersistentObjectProperty();
+$def->properties['wait_timeout_repeat']->columnName   = 'wait_timeout_repeat';
+$def->properties['wait_timeout_repeat']->propertyName = 'wait_timeout_repeat';
+$def->properties['wait_timeout_repeat']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
+
 $def->properties['online_user_id'] = new ezcPersistentObjectProperty();
 $def->properties['online_user_id']->columnName   = 'online_user_id';
 $def->properties['online_user_id']->propertyName = 'online_user_id';
@@ -273,6 +288,17 @@ $def->properties['na_cb_executed']->columnName   = 'na_cb_executed';
 $def->properties['na_cb_executed']->propertyName = 'na_cb_executed';
 $def->properties['na_cb_executed']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
 
+// Chat locale, if empty that means no automatic translations are needed
+$def->properties['chat_locale'] = new ezcPersistentObjectProperty();
+$def->properties['chat_locale']->columnName   = 'chat_locale';
+$def->properties['chat_locale']->propertyName = 'chat_locale';
+$def->properties['chat_locale']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_STRING;
+
+$def->properties['chat_locale_to'] = new ezcPersistentObjectProperty();
+$def->properties['chat_locale_to']->columnName   = 'chat_locale_to';
+$def->properties['chat_locale_to']->propertyName = 'chat_locale_to';
+$def->properties['chat_locale_to']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_STRING;
+
 // Feedback status
 // 0 - not votes, 1 - upvote, 2 - novote
 $def->properties['fbst'] = new ezcPersistentObjectProperty();
@@ -291,6 +317,28 @@ $def->properties['tslasign'] = new ezcPersistentObjectProperty();
 $def->properties['tslasign']->columnName   = 'tslasign';
 $def->properties['tslasign']->propertyName = 'tslasign';
 $def->properties['tslasign']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
+
+$def->properties['unanswered_chat'] = new ezcPersistentObjectProperty();
+$def->properties['unanswered_chat']->columnName   = 'unanswered_chat';
+$def->properties['unanswered_chat']->propertyName = 'unanswered_chat';
+$def->properties['unanswered_chat']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
+
+$def->properties['last_op_msg_time'] = new ezcPersistentObjectProperty();
+$def->properties['last_op_msg_time']->columnName   = 'last_op_msg_time';
+$def->properties['last_op_msg_time']->propertyName = 'last_op_msg_time';
+$def->properties['last_op_msg_time']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
+
+$def->properties['has_unread_op_messages'] = new ezcPersistentObjectProperty();
+$def->properties['has_unread_op_messages']->columnName   = 'has_unread_op_messages';
+$def->properties['has_unread_op_messages']->propertyName = 'has_unread_op_messages';
+$def->properties['has_unread_op_messages']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
+
+$def->properties['unread_op_messages_informed'] = new ezcPersistentObjectProperty();
+$def->properties['unread_op_messages_informed']->columnName   = 'unread_op_messages_informed';
+$def->properties['unread_op_messages_informed']->propertyName = 'unread_op_messages_informed';
+$def->properties['unread_op_messages_informed']->propertyType = ezcPersistentObjectProperty::PHP_TYPE_INT;
+
+
 
 
 return $def;

@@ -11,6 +11,7 @@ class erLhcoreClassModelDepartament {
                'xmpp_recipients'     	=> $this->xmpp_recipients,
                'xmpp_group_recipients'  => $this->xmpp_group_recipients,
                'priority'     			=> $this->priority,
+               'sort_priority'     		=> $this->sort_priority,
                'department_transfer_id' => $this->department_transfer_id,
                'transfer_timeout'    	=> $this->transfer_timeout,
                'identifier'    			=> $this->identifier,
@@ -29,6 +30,7 @@ class erLhcoreClassModelDepartament {
                'online_hours_active'    => $this->online_hours_active,
                'disabled'    			=> $this->disabled,
                'hidden'    				=> $this->hidden,
+               'visible_if_online'    	=> $this->visible_if_online,
                'delay_lm' 				=> $this->delay_lm,
                'inform_unread' 			=> $this->inform_unread,
                'inform_unread_delay' 	=> $this->inform_unread_delay,
@@ -36,7 +38,13 @@ class erLhcoreClassModelDepartament {
                'nc_cb_execute' 			=> $this->nc_cb_execute,
                'active_balancing' 		=> $this->active_balancing,
                'max_active_chats' 		=> $this->max_active_chats,
-               'max_timeout_seconds' 	=> $this->max_timeout_seconds
+               'max_timeout_seconds' 	=> $this->max_timeout_seconds,
+               'attr_int_1' 	        => $this->attr_int_1,
+               'attr_int_2' 	        => $this->attr_int_2,
+               'attr_int_3' 	        => $this->attr_int_3,
+               'active_chats_counter' 	=> $this->active_chats_counter,
+               'pending_chats_counter' 	=> $this->pending_chats_counter,
+               'closed_chats_counter' 	=> $this->closed_chats_counter,
        );
    }
 
@@ -159,7 +167,7 @@ class erLhcoreClassModelDepartament {
 
    public static function getList($paramsSearch = array())
    {
-       $paramsDefault = array('limit' => 32, 'offset' => 0);
+       $paramsDefault = array('limit' => 500000, 'offset' => 0);
 
        $params = array_merge($paramsDefault,$paramsSearch);
 
@@ -221,6 +229,7 @@ class erLhcoreClassModelDepartament {
     public $name = '';
     public $email = '';
     public $priority = 0;
+    public $sort_priority = 0;
     public $department_transfer_id = 0;
     public $transfer_timeout = 0;
     public $identifier = '';    
@@ -248,6 +257,14 @@ class erLhcoreClassModelDepartament {
     public $active_balancing = 0;
     public $max_active_chats = 0;
     public $max_timeout_seconds = 0;
+    public $attr_int_1 = 0;
+    public $attr_int_2 = 0;
+    public $attr_int_3 = 0;
+    public $visible_if_online = 0;
+    
+    public $active_chats_counter = 0;
+    public $pending_chats_counter = 0;
+    public $closed_chats_counter = 0;
     
     // 0 - disabled
     // > 0 - delay in seconds

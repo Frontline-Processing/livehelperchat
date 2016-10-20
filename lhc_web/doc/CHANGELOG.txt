@@ -1,3 +1,431 @@
+2.50v
+
+1. Now it's possible to inform user about unread messages from operator.
+2. In survey editing window you can choose what fields are required and what not.
+3. You can now prefill also proactive invitation.
+
+You have to have running for first enhancement.
+php cron.php -s site_admin -c cron/workflow
+
+execute doc/update_db/update_125.sql for update
+
+2.49v
+
+1. Survey now can have custom fields
+
+execute doc/update_db/update_124.sql for update
+
+2.48v
+
+1. XMPP Support for PHP7
+2. Full height layout update for proactive invitation
+3. Proactive invitation now supports tag
+
+execute doc/update_db/update_123.sql for update
+
+2.47v
+
+1. REST API call to change operator status to online/offline
+2. Google Maps API update. You can now have google maps API key defined in back office.
+3. On mizimize header of widget was hidden, it's fixed now.
+4. And a lot of others small changes.
+
+execute doc/update_db/update_122.sql for update
+
+
+2.46v
+
+1. Option to disable iframes rendering. It just increases security in some cases.
+2. href links in co-browsing will be replaced with javascript:void(0), so in order operator to click invalid link he will have to type it manually.
+
+execute doc/update_db/update_121.sql for update
+
+2.45v
+
+1. Admin themes
+execute doc/update_db/update_120.sql for update
+
+2.44v
+
+1. Rest API Initial version
+
+execute doc/update_db/update_119.sql for update
+
+2.43v
+
+1. Chat lists will have option to filter by product
+2. Chat's widgets can be filtered by product
+3. Custom field in users account which would be used instead of Name surname if filled.
+
+execute doc/update_db/update_118.sql for update
+
+2.42v
+
+1. Product concept, few products can be assigned to single department [Sponsored]
+2. Passwords are stored using password_hash function. [Improved security]
+3. Cleanup user part [General]
+4. 5.4 PHP required
+5. https://github.com/LiveHelperChat/livehelperchat/issues/789
+6. Option to securely encrypt passed data to additional form data. [Sponsored]
+7. Paid chats concept, tutorial article is comming. [Sponsored]
+
+execute doc/update_db/update_117.sql for update
+
+2.41v
+
+1. New statistic - unanswered chats. Chat becames unanswered if
+
+a. User starts chat and there is message field and chat is pending.
+b. Operator accepts a chat but visitor has already closed chat widget chat remains unanswered.
+c. If chat started in proactive mode and user filled message and chat is not accepted yet.
+d. Unanswered chat flag is removed.
+
+2. User row has 3 additional attributes which can be used for extensions.
+attr_int_1
+attr_int_2
+attr_int_3
+
+execute doc/update_db/update_116.sql for update
+
+2.40v
+1. Option to force close chat on widget close button. At the moment it just closes widget. But on operator side there is no indication for that. 
+2. Custom field for sort priority
+3. https://github.com/LiveHelperChat/livehelperchat/issues/800
+4. https://github.com/LiveHelperChat/livehelperchat/issues/810
+5. https://github.com/LiveHelperChat/livehelperchat/issues/803
+6. https://github.com/LiveHelperChat/livehelperchat/issues/796
+
+execute doc/update_db/update_115.sql for update
+
+2.39v
+
+1. https://github.com/LiveHelperChat/livehelperchat/issues/772 - option in theme to define optional field which would be visible in department
+2. https://github.com/LiveHelperChat/livehelperchat/issues/715
+3. One more time new chat messages interface. Messages can be styled in theme editing window.
+4. Option to turn off/on voting thumbs
+5. Option to have custom text instaed of Department. Let say location.
+
+execute doc/update_db/update_114.sql for update
+
+2.38v
+
+1. https://github.com/LiveHelperChat/livehelperchat/issues/771
+2. Option to enable disable need help widget directly from theme.
+
+execute doc/update_db/update_113.sql for update
+
+2.37v
+
+1. User can drag and sort frontpage widgets as he wants. Widgets order and what widgets user can see are based on user individually.
+2. Canned messages are sorted by position and title now.
+3. Other small UX updates.
+
+execute doc/update_db/update_112.sql for update
+
+2.36v
+
+1. User activity tracking on site enhancements. New tab in settings "Visitor activity"
+
+execute doc/update_db/update_111.sql for update
+
+2.35v
+
+1. Option to have a survey at the end of chat. This mode is written in flexible way so most likely it will be mutch more improved over time. At the moment only stars evaluation at the end of chat is possible
+2. New icons - https://www.google.com/design/icons/
+3. Left menu
+4. In start chat you can enable automatic start chat as soon visitors types atleast one key.
+5. And various others UX and performance improvements.
+6. For update just follow standard update procedure For manual update it's update_110.sql
+
+execute doc/update_db/update_110.sql for update
+
+2.34v
+
+1. Unfilled forms fields will be highlighted
+2. Security improvements
+3. Option to prefill custom fields which were added from back office.
+4. https://github.com/LiveHelperChat/livehelperchat/issues/701
+5. https://github.com/LiveHelperChat/livehelperchat/issues/700
+6. https://github.com/LiveHelperChat/livehelperchat/issues/699
+7. https://github.com/LiveHelperChat/livehelperchat/issues/694
+8. Tooltips changed to bootstrap popovers
+9. https://github.com/LiveHelperChat/livehelperchat/issues/702
+10. Translations won't translate BBCode
+
+There is no required database update for this release.
+
+2.33v
+
+1. Transfered chats as widget.
+2. Updates required for XMPP support.
+3. New algorithm for sound and notifications. Sound stops after pending chat is gone.
+4. Option to delete pending chat instantly.
+5. Position queue. https://github.com/LiveHelperChat/livehelperchat/issues/635
+6. Option to set automatically checkd Terms Of Service checkbox
+7. Desktop client will show only only visitors which user has permission to see.
+8. E-mail templates supports {chat_id}
+9. Permission UX https://github.com/LiveHelperChat/livehelperchat/issues/690
+10. Optimizations for excel generation https://github.com/LiveHelperChat/livehelperchat/pull/688
+11. Option to hide right column in frontpage.
+12. Department XMPP recipients column change to text https://github.com/LiveHelperChat/livehelperchat/issues/686
+13. Statistic improvements.
+
+There is no required database update for this release.
+
+2.32v
+
+1. Brand new dashboard. Sponsored feature...
+2. Few optimizations in back office sync calls.
+3. Dashboard has new widget for department statistic.
+
+execute doc/update_db/update_109.sql for update
+
+2.31v
+
+1. Option to enable only one logged user under same account in settings/settings.ini.php
+Please add under "site" section 
+'one_login_per_account' => false,
+2. Automatic translations kept recording old translation settings.
+3. Visitor will be able to see chat for rest half hour once it was closed.
+4. Responsive logo
+5. Collapse expand right panels
+6. And a lot of other internal small changes.
+
+execute doc/update_db/update_108.sql for update
+
+2.30v
+
+1. Canned messages have three additional integere attributes which can be used in extensions
+2. https://github.com/LiveHelperChat/livehelperchat/issues/670
+3. Canned messages now has fallback option. Let say if original message does not have a replacable variable canned message will be the fallback one.
+4. In custom form fields there is new field "Field identifier" it can be used in canned messages.
+5. A lot of override options. Usefull for extesnions.
+6. Bunch of dispatches events around a places. Just gives more flexibility without overriding all module file.
+
+execute doc/update_db/update_107.sql for update
+
+2.29v
+
+1. One more flow of internal changes and flexibility enhancements. Basically while building commercial plugins I'm extending core with more templates overrides and 
+events
+2. Three new attributes in departments which can be used in extensions.
+3. Few fixed regarding user arguments variables. It was lost during form submitting. It was effecting only extensions.
+4. Custom forms field can be managed from back office. Basically admin can add custom fields directly from back office. No need to use Javascript.
+
+execute doc/update_db/update_106.sql for update
+
+2.28v
+
+1. Internal changes regarding co-browsing. Support for co-browsing session based on online visitor. These changes were done to allow plugin initiate co-browsing session without a chat. This is pure for extensions purposes. No UX changes.
+2. NodeJS-Helper plugin update, chat became offline if no actions were processed for online timeout period. This happened only if NodeJS with publish notifications were used.
+3. Chat start chat will have automatic height for first time. UX improvement 
+
+execute doc/update_db/update_105.sql for update
+
+2.27v
+
+1. Autologin module. Read site how to use it. It's simplifies integration with third party CMS. By default it's turned off.
+Example also available at doc/autologin/autologin.php
+This module was sponsored by the way.
+
+2. And a lot of templates split's in order for automated hosting to allow easier enable disable features
+ 
+execute doc/update_db/update_104.sql for update
+
+2.26v
+
+1. Widget theme has new tab where you can enter most important text.
+2. SMTP failing sending if forgot password window.
+3. Separation templates based on features. It's all hard work because of upcomming new Automated hosting version.
+4. Offline text styling then operator are offline. Just language select was taking a whole space.
+5. Theme variable was not passed on some cases.
+
+execute doc/update_db/update_103.sql for update
+
+2.25v
+
+1. Posibility to disable groups. Thats the only stuff will be done regarding https://github.com/LiveHelperChat/livehelperchat/issues/626
+2. Company name for theme. https://github.com/LiveHelperChat/livehelperchat/issues/644
+3. Option to provide chatbox name. E.g 
+For page embed code
+var LHCChatboxOptionsEmbed = {identifier:'default','nick':'remdex44','chatbox_name' : 'custom name'};
+For standard widget
+var LHCChatboxOptions = {identifier:'default',status_text:'Chatbox','nick':'remdex44','disable_nick_change':true,'chatbox_name' : 'custom name right'};
+https://github.com/LiveHelperChat/livehelperchat/issues/643
+
+4. System messages won't be shown in messages send to user
+https://github.com/LiveHelperChat/livehelperchat/issues/645
+
+5. Co-Browsing now does not require dedicated sub-domain. It can use same domain sub-locations. This will save some users funds like they won't have to buy ssl for sub-domain
+See doc/node_servers/cobrowsing
+
+6. Operator now has ability to request permission to selected module. [Sponsored]
+
+7. Many parts were splitted into separte templates to prepare for new features in automated hosting [Sponsored]
+
+execute doc/update_db/update_102.sql for update
+
+2.24v
+
+Sponsored release
+1. Automatic messages translations using Bing or Google translations service.
+2. Futher Bootstrap fixes. Were missing some places with old foundation 4 syntax.
+3. A little bit refactored chat window. Removed subtabs.
+4. Microphone settings moved to actions block and in it's place added automatic translations button.
+5. Allow operators to chat even if they do not have permission to open others operators chats. https://forum.livehelperchat.com/viewtopic.php?id=1019
+6. Right columns nicer interface
+7. Co-Browsing scroll sync stopped to work after jQuery update. Switched to native JS API
+
+execute doc/update_db/update_101.sql for update
+
+2.23v
+
+1. Integrated webpack, bower, gulp and other fancy stuff.
+2. LHC was migrated to Bootstrap v3.3.2. I had tough choise decing stay with Foundation or use Bootstrap, but for systems Bootstrap just is more nicer.
+3. A lot of code rewrite, CSS cleanup and so on.
+
+2.22v
+
+1. All Javascript's is now compressed.
+2. Option to set notes for online user. If you click first user icon in popup the last tab will be notes. https://github.com/LiveHelperChat/livehelperchat/issues/613
+3. Delete, Close icons will represents actual user permissions. https://github.com/LiveHelperChat/livehelperchat/issues/614
+4. Online users list will have lest icons in last column.
+5. New maxmind database for countries
+6. Identifier variable for forms.
+7. Option to force to use user e-mail as from address in e-mail templates. Use with caution because most cases Gmail could consider mails as spam. But usefull with integration with third party ticket systems.
+8. Option to set how many times repeat autoresponder message. This can be set in proactive invitation and autoresponder itself also.
+9. Map icon click will open full size Modal window instead of Marker popup.
+10. Embed code generation window will check that domain would not contain protocol.
+
+execute doc/update_db/update_100.sql for update
+
+2.21v
+
+1. Option to change front page tabs order in chat configuraiton section. (Misc)
+https://github.com/LiveHelperChat/livehelperchat/issues/593
+2. Option to set Sender e-mail for all aplication.
+https://github.com/LiveHelperChat/livehelperchat/issues/598
+
+execute doc/update_db/update_99.sql for update
+
+2.20v
+
+1. Speech to text support. Only google chrome at the moment has this hTML5 API
+2. Theme variable was not forwarded internally. (During read operator message action)
+3. Relative position for iframe. Some sites are using nonsense iframe positions.
+4. Operator typing issue was fixed. Operator typing message was shown and was not shown again even if operator was still typing
+5. Text preview position was changed.
+6. Various co-browsing improvements.
+
+execute doc/update_db/update_98.sql for update
+
+
+2.19v
+
+1. More attributes for themes
+Restore, Popup, Close, Miminize images
+Hide close, Hide popup options in theme.
+Header widget height and padding options
+Main widget border width option
+
+2. Cookie conflict fix with third party libraries
+
+3. Now operator can follow user scrollbar position
+
+execute doc/update_db/update_97.sql for update
+
+2.18v
+
+Co-Browsing enhancement release part 2
+1. Select box change will be synced to user browser also.
+2. If your site is using jQuery JS library highligh elements selection will be more precise. 99.99% of accuracy. 
+3. User actions on forms will be synced to operator browser. That means while user is filling a form you will see what fields he fills instantly, 
+what checkboxes checks and so on. This feature requires jQuery JS library on remote site.
+4. You can choose to execute or not javascript on Operator Co-Browsing window. Option available in Co-Browsing options.
+
+execute doc/update_db/update_96.sql for update
+
+2.17v
+
+Co-Browsing enhancement release
+
+1. Now from co-browsing window you can highligh elements. Just click left mouse cursor on desirable element.
+2. If you click link hodling CTRL browser on user side will click this element to. This means you can navigate user browser where you want.
+3. At top bar there is now network icon. If you click it you can navigate user preciselly to URL you want. You can navigate user to another url also from chat window. There is new icon for that
+4. You can fill some of the forms fields by holding CTRL+Left mouse click. As field becames with blue shadow you can fill text fields on visitor browser directly. Fill forms for users :)
+5. NodeJs server for Co-Browsing was updated.
+6. You can can allow user to see your mouse pointer on his screen.
+7. You can force user browser to scroll to highlighted element by checking checkbox at top.
+8. Operator Co-Browser window will represent exact view of user browser. This is required to match mouse positions.
+
+execute doc/update_db/update_95.sql for update
+
+2.16v
+
+Release with one mega feature. Co-Browsing - see exactly what your users see and help them to navigate.
+
+1. This feature works even on standard server without special software. But if you want to use at it's maximum runing node server is required.
+Inspiration come from, without these libraries it would be impossible to do all that :)
+https://code.google.com/p/mutation-summary/
+https://github.com/abbakym/mutationsummary-cobrowsing-experiment
+http://teft.deviantart.com/art/Obsidian-Cursor-set-78972293
+
+execute doc/update_db/update_94.sql for update
+
+2.15v
+
+1. Option to choose auto responder for specific department.
+https://github.com/LiveHelperChat/livehelperchat/issues/547
+
+2. Option to allow send file in offline chat form
+https://github.com/LiveHelperChat/livehelperchat/issues/370
+
+3. Instead of banning e-mails which are very easy to fake, there is option to ban not only single ip but also IP ranges.
+https://github.com/LiveHelperChat/livehelperchat/issues/546
+
+4. Will be recorded time when user has left a chat
+https://github.com/LiveHelperChat/livehelperchat/issues/535
+
+5. Adjusted position of user typing text indicator
+https://github.com/LiveHelperChat/livehelperchat/issues/532
+
+5. Posibility to edit main chat information. At the moment only user nick and e-mail address
+https://github.com/LiveHelperChat/livehelperchat/issues/504
+
+execute doc/update_db/update_93.sql for update
+
+2.14v
+
+This release is maintenence release with few enhancements
+
+1. Option to pass identifier. It can be either some specific value or if not provided it will be referer URL.
+Also new variable in template can be used {url_view} it will be link to filled form view instead of download link.
+https://github.com/LiveHelperChat/livehelperchat/issues/563
+2. Chat window in browsing information tab will show is user on page still or not. Option "Track is user still on site, chat status checks also has to be enabled" has to be enabled.
+3. Different message will be shown then user starts chat from chat popup instead of chat widget. Like then user navigates to another window from widget it's shown URL to which he navigated. Then user decides to open popup for chat it will be different message.
+4. Invitation to chat will also pay attention to additional fields attributes. https://github.com/LiveHelperChat/livehelperchat/issues/540
+5. Proactive messages retargeting. In returning message field you can enter {nick}, if we will find a previous chat associated with this online user, nick from previous chat will be used if not proactive invitation nick field value will be used. 
+https://github.com/LiveHelperChat/livehelperchat/issues/544
+
+execute doc/update_db/update_92.sql for update
+
+2.13v
+
+This realease is maintenence release with a lot of small changes.
+
+1. Updated xml module to return unread chats list also
+2. Move events for NodeJs extension
+3. Changed autoload mechanism to be compatible with third party autoloads. Replace index.php file
+4. XML module was missing some callbacks which are present in web interface
+5. A lot of small updates to to be compatible with newest NodeJS version.
+6. En https://github.com/LiveHelperChat/livehelperchat/issues/511
+7. If user navigated to another page sometimes user was shown as offline, even if user was online.
+8. Not required interface sync was removed in popup window.
+9. Cache for emoji icons https://github.com/LiveHelperChat/livehelperchat/issues/503
+10. Sound for unread messages will be played https://github.com/LiveHelperChat/livehelperchat/issues/505
+
+There is no database update in this release. 
+
 2.12v
 
 1. Now you can have fully functional and working minimalistic chat start form.

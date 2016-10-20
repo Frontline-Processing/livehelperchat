@@ -98,13 +98,13 @@ if ($votingRelative !== false) {
 
 		if (erLhcoreClassModelChatConfig::fetch('session_captcha')->current_value == 1) {
 			if ( !$form->hasValidData( $nameField ) || $form->$nameField == '' || $form->$nameField < time()-600 || $hashCaptcha != sha1($_SERVER['REMOTE_ADDR'].$form->$nameField.erConfigClassLhConfig::getInstance()->getSetting( 'site', 'secrethash' ))){
-				$Errors[] = erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchat','Invalid captcha code, please enable Javascript!');
+				$Errors[] = erTranslationClassLhTranslation::getInstance()->getTranslation("chat/startchat","Your request was not processed as expected - but don't worry it was not your fault. Please re-submit your request. If you experience the same issue you will need to contact us via other means.");
 			}
 		} else {
 			// Captcha validation
 	        if ( !$form->hasValidData( $nameField ) || $form->$nameField == '' || $form->$nameField < time()-600 )
 	        {
-	        	$Errors[] = erTranslationClassLhTranslation::getInstance()->getTranslation('chat/startchat','Invalid captcha code, please enable Javascript!');
+	        	$Errors[] = erTranslationClassLhTranslation::getInstance()->getTranslation("chat/startchat","Your request was not processed as expected - but don't worry it was not your fault. Please re-submit your request. If you experience the same issue you will need to contact us via other means.");
 	        }
 		}
 		
@@ -121,9 +121,13 @@ if ($votingRelative !== false) {
 			}
 		}
 
+        erLhcoreClassChatEventDispatcher::getInstance()->dispatch('questionaire.before_option_chosen', array('voting' => & $votingAnswer, 'errors' => & $Errors));
 
 		if ( count($Errors) == 0) {
 			$votingAnswer->saveThis();
+			
+			erLhcoreClassChatEventDispatcher::getInstance()->dispatch('questionaire.option_chosen', array('voting' => & $votingAnswer));
+			
 			$tpl->set('received',true);
 		} else {
 	        $tpl->set('errors',$Errors);
@@ -170,8 +174,13 @@ if ($votingRelative !== false) {
 			}
 		}
 
+        erLhcoreClassChatEventDispatcher::getInstance()->dispatch('questionaire.before_feedback_left', array('feedback' => & $answer, 'errors' => & $Errors));
+
 		if ( count($Errors) == 0) {
 			$answer->saveThis();
+			
+			erLhcoreClassChatEventDispatcher::getInstance()->dispatch('questionaire.feedback_left', array('feedback' => & $answer));
+			
 			$tpl->set('received',true);
 		} else {
 			$tpl->set('errors',$Errors);
@@ -202,9 +211,6 @@ $Result['content'] = $tpl->fetch();
 $Result['pagelayout'] = 'widget';
 $Result['dynamic_height'] = true;
 $Result['dynamic_height_message'] = 'lhc_sizing_questionary';
-$Result['dynamic_height_append'] = 10;
-
-
 
 if ($embedMode == true) {
 	$Result['dynamic_height_message'] = 'lhc_sizing_questionary_page';

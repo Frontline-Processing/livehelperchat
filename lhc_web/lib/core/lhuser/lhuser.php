@@ -33,37 +33,87 @@ class erLhcoreClassUser{
 
 	       	if ($logged == false) {
 	       		$this->authenticated = false;
-
+	       			       		
 	       		if ( isset($_SESSION['lhc_user_id']) )
 	       		{
 	       			unset($_SESSION['lhc_user_id']);
+	       		}
+	       			       		
+	       		if ( isset($_SESSION['lhc_access_array']) )
+	       		{
 	       			unset($_SESSION['lhc_access_array']);
+	       		}
+	       			       		
+	       		if ( isset($_SESSION['lhc_access_timestamp']) )
+	       		{
 	       			unset($_SESSION['lhc_access_timestamp']);
 	       		}
+	       			       		
+	       		if ( isset($_SESSION['lhc_chat_config']) )
+	       		{
+	       			unset($_SESSION['lhc_chat_config']);
+	       		}
 	       	}
-
+	       	
        } else {
 
-          $this->session->save( $this->session->load() );
-          $this->userid = $_SESSION['lhc_user_id'];
-          $this->authenticated = true;
+          if (isset($_SESSION['lhc_user_id']) && is_numeric($_SESSION['lhc_user_id'])){
+              $this->session->save( $this->session->load() );
+              $this->userid = $_SESSION['lhc_user_id'];
+              $this->authenticated = true;
+              
+              // Check that session is valid
+              if (self::$oneLoginPerAccount == true || erConfigClassLhConfig::getInstance()->getSetting( 'site', 'one_login_per_account', false ) == true) {              
+                  $sesid = $this->getUserData(true)->session_id;             
+                  if ($sesid != $_COOKIE['PHPSESSID'] && $sesid != '') {
+                      $this->authenticated = false;
+                      $this->logout();
+                      $_SESSION['logout_reason'] = 1;
+                  } else {
+                      $this->authenticated = true;
+                  }
+              }
+          }
        }
    }
 
-   function authenticate($username,$password,$remember = false)
+   function authenticate($username, $password, $remember = false)
    {
-       $this->session->destroy();
+		$this->session->destroy();
+       
+		$user = erLhcoreClassModelUser::findOne(array(
+			'filter' => array(
+				'username' => $username
+			)
+		));  
 
-       $cfgSite = erConfigClassLhConfig::getInstance();
-	   $secretHash = $cfgSite->getSetting( 'site', 'secrethash' );
+		if ($user === false) {
+			return false;
+		};
 
-       $this->credentials = new ezcAuthenticationPasswordCredentials( $username, sha1($password.$secretHash.sha1($password)) );
+		$cfgSite = erConfigClassLhConfig::getInstance();
+		$secretHash = $cfgSite->getSetting( 'site', 'secrethash' );
+
+		if (strlen($user->password) == 40) { // this is old password
+		    $passwordVerify = sha1($password.$secretHash.sha1($password));
+		    $changePassword = true;
+        } else {
+
+    		if (!password_verify($password, $user->password)) {
+    			return false;
+    		};
+
+    		$changePassword = false;
+    		$passwordVerify = $user->password;
+	   }
+
+       $this->credentials = new ezcAuthenticationPasswordCredentials( $username, $passwordVerify );
 
        $database = new ezcAuthenticationDatabaseInfo( ezcDbInstance::get(), 'lh_users', array( 'username', 'password' ) );
        $this->authentication = new ezcAuthentication( $this->credentials );
 
        $this->filter = new ezcAuthenticationDatabaseFilter( $database );
-       $this->filter->registerFetchData(array('id','username','email','disabled'));
+       $this->filter->registerFetchData(array('id','username','email','disabled','session_id'));
 
        $this->authentication->addFilter( $this->filter );
        $this->authentication->session = $this->session;
@@ -92,6 +142,25 @@ class erLhcoreClassUser{
                 }
 
                 $this->authenticated = true;
+
+                // Limit number per of logins under same user
+                if ((self::$oneLoginPerAccount == true || $cfgSite->getSetting( 'site', 'one_login_per_account', false ) == true) && $_COOKIE['PHPSESSID'] !='') {
+                    $db = ezcDbInstance::get();
+                    $stmt = $db->prepare('UPDATE lh_users SET session_id = :session_id WHERE id = :id');
+                    $stmt->bindValue(':session_id',$_COOKIE['PHPSESSID'],PDO::PARAM_STR);
+                    $stmt->bindValue(':id',$this->userid,PDO::PARAM_INT);
+                    $stmt->execute();
+                }
+
+                // Change old password to new one
+                if ($changePassword === true) {
+                    $db = ezcDbInstance::get();
+                    $stmt = $db->prepare('UPDATE lh_users SET password = :password WHERE id = :id');
+                    $stmt->bindValue(':password', password_hash($password, PASSWORD_DEFAULT), PDO::PARAM_STR);
+                    $stmt->bindValue(':id', $this->userid, PDO::PARAM_INT);
+                    $stmt->execute();
+                }
+
                 return true;
             }
 
@@ -157,6 +226,18 @@ class erLhcoreClassUser{
    					$this->userid = $data['id'][0];
 
    					$this->authenticated = true;
+   					
+   					$cfgSite = erConfigClassLhConfig::getInstance();
+   					
+   					// Limit number per of logins under same user
+   					if ((self::$oneLoginPerAccount == true || $cfgSite->getSetting( 'site', 'one_login_per_account', false ) == true) && $_COOKIE['PHPSESSID'] !='') {
+   					    $db = ezcDbInstance::get();
+   					    $stmt = $db->prepare('UPDATE lh_users SET session_id = :session_id WHERE id = :id');
+   					    $stmt->bindValue(':session_id',$_COOKIE['PHPSESSID'],PDO::PARAM_STR);
+   					    $stmt->bindValue(':id',$this->userid,PDO::PARAM_INT);
+   					    $stmt->execute();
+   					}
+   					
    					return true;
    				}
 
@@ -165,6 +246,10 @@ class erLhcoreClassUser{
 	   	}
    }
 
+   /**
+    * 
+    * @param string $url url where after logout user should be redirecter
+    */
    function logout()
    {
        if (isset($_SESSION['lhc_access_array'])){ unset($_SESSION['lhc_access_array']); }
@@ -172,7 +257,8 @@ class erLhcoreClassUser{
        if (isset($_SESSION['lhc_user_id'])){ unset($_SESSION['lhc_user_id']); }
        if (isset($_SESSION['lhc_csfr_token'])){ unset($_SESSION['lhc_csfr_token']); }
        if (isset($_SESSION['lhc_user_timezone'])){ unset($_SESSION['lhc_user_timezone']); }
-
+       if (isset($_SESSION['lhc_chat_config'])){ unset($_SESSION['lhc_chat_config']); }
+       
        if ( isset($_COOKIE['lhc_rm_u']) ) {
        		unset($_COOKIE['lhc_rm_u']);
        		setcookie('lhc_rm_u','',time()-31*24*3600,'/');
@@ -185,12 +271,14 @@ class erLhcoreClassUser{
 	       $q->deleteFrom( 'lh_users_remember' )->where( $q->expr->eq( 'user_id', $q->bindValue($this->userid) ) );
 	       $stmt = $q->prepare();
 	       $stmt->execute();
-	
-	       $this->session->destroy();
-	
+	       
 	       $db = ezcDbInstance::get();
 	       $db->query('UPDATE lh_userdep SET last_activity = 0 WHERE user_id = '.$this->userid);
        }
+       
+       $this->session->destroy();
+       
+       session_regenerate_id(true);
    }
 
    public static function getSession()
@@ -326,6 +414,8 @@ class erLhcoreClassUser{
    {
        $accessArray = erLhcoreClassRole::accessArrayByUserID( $this->userid );
 
+       erLhcoreClassChatEventDispatcher::getInstance()->dispatch('user.after_generate_access_array',array('accessArray' => & $accessArray));
+
        return $accessArray;
    }
 
@@ -381,7 +471,9 @@ class erLhcoreClassUser{
    private $AccessArray = false;
    private $AccessTimestamp = false;
 
-
+   // This variable will be set to true based on online hosting record
+   public static $oneLoginPerAccount = false;
+   
    // Authentification things
    public $authentication;
    public $session;

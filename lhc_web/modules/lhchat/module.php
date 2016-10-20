@@ -82,6 +82,11 @@ $ViewList['sendmail'] = array(
     'functions' => array( 'use' )
 );
 
+$ViewList['modifychat'] = array(
+    'params' => array('chat_id'),
+    'functions' => array( 'modifychat' )
+);
+
 $ViewList['transferchat'] = array(
     'params' => array('chat_id'),
     'functions' => array( 'allowtransfer' )
@@ -96,23 +101,39 @@ $ViewList['accepttransfer'] = array(
 $ViewList['deletechatadmin'] = array(
     'params' => array('chat_id'),
     'functions' => array( 'deletechat' )
-    );
+);
 
 $ViewList['delete'] = array(
     'params' => array('chat_id'),
     'uparams' => array('csfr'),
     'functions' => array( 'deletechat' )
-    );
+);
 
 $ViewList['syncadmininterface'] = array(
     'params' => array(),
-    'functions' => array( 'use' )
-    );
+    'uparams' => array('departmentd','operatord','actived','pendingd','closedd','unreadd','limita','limitp','limitc','limitu','limito','limitd','activedprod','unreaddprod','pendingdprod','closeddprod','psort'),
+    'ajax' => true,
+    'functions' => array( 'use' ),
+    'multiple_arguments' => array ( 'operatord', 'actived', 'closedd' , 'pendingd', 'unreadd','departmentd','activedprod','unreaddprod','pendingdprod','closeddprod')
+);
 
-$ViewList['lists'] = array(
+$ViewList['loadinitialdata'] = array(
+    'params' => array(),
+    'uparams' => array(),
+    'ajax' => true,
+    'functions' => array( 'use' )
+);
+
+$ViewList['list'] = array(
+    'params' => array(),
+    'uparams' => array('nick','email','timefrom','timeto','department_id','user_id','print','xls','fbst','chat_status','hum','product_id'),
+    'functions' => array( 'use' )
+);
+
+$ViewList['dashboardwidgets'] = array(
     'params' => array(),
     'functions' => array( 'use' )
-    );
+);
 
 $ViewList['chattabs'] = array(
     'params' => array('chat_id'),
@@ -160,37 +181,6 @@ $ViewList['syncadmin'] = array(
     'functions' => array( 'use' )
 );
 
-$ViewList['activechats'] = array(
-    'params' => array(),
-    'uparams' => array('nick','email','timefrom','timeto','department_id','user_id','print','xls'),
-    'functions' => array( 'use' )
-);
-
-$ViewList['closedchats'] = array(
-    'params' => array(),
-    'uparams' => array('nick','email','timefrom','timeto','department_id','user_id','print','xls'),
-    'functions' => array( 'use' )
-);
-
-$ViewList['operatorschats'] = array(
-    'params' => array(),
-	'uparams' => array('nick','email','timefrom','timeto','department_id','user_id','print','xls'),
-    'functions' => array( 'use' )
-);
-
-$ViewList['unreadchats'] = array(
-    'script' => 'unreadchats.php',
-    'params' => array(),
-	'uparams' => array('nick','email','timefrom','timeto','department_id','user_id','print','xls'),
-    'functions' => array( 'use' )
-);
-
-$ViewList['pendingchats'] = array(
-    'params' => array(),
-    'uparams' => array('nick','email','timefrom','timeto','department_id','user_id','print','xls'),
-    'functions' => array( 'use' )
-    );
-
 $ViewList['addmsgadmin'] = array(
     'params' => array('chat_id'),
     'functions' => array( 'use' )
@@ -206,7 +196,17 @@ $ViewList['addoperation'] = array(
     'functions' => array( 'use' )
 );
 
+$ViewList['refreshcustomfields'] = array(
+    'params' => array(),
+    'uparams' => array('vid','hash','hash_resume'),
+);
+
 $ViewList['addonlineoperation'] = array(
+    'params' => array('online_user_id'),
+    'functions' => array( 'use' )
+);
+
+$ViewList['addonlineoperationiframe'] = array(
     'params' => array('online_user_id'),
     'functions' => array( 'use' )
 );
@@ -214,7 +214,12 @@ $ViewList['addonlineoperation'] = array(
 $ViewList['saveremarks'] = array(
     'params' => array('chat_id'),
     'functions' => array( 'use' )
-    );
+);
+
+$ViewList['saveonlinenotes'] = array(
+    'params' => array('online_user_id'),
+    'functions' => array( 'use' )
+);
 
 /* Anonymous functions */
 $ViewList['addmsguser'] = array(
@@ -250,7 +255,12 @@ $ViewList['voteaction'] = array(
 
 $ViewList['syncuser'] = array(
     'params' => array('chat_id','message_id','hash'),
-	'uparams' => array('mode','ot')
+	'uparams' => array('mode','ot','theme','modeembed')
+);
+
+$ViewList['editnick'] = array(
+    'params' => array('chat_id','hash'),
+	'uparams' => array()
 );
 
 $ViewList['usertyping'] = array(
@@ -260,7 +270,7 @@ $ViewList['usertyping'] = array(
 
 $ViewList['checkchatstatus'] = array(
     'params' => array('chat_id','hash'),
-    'uparams' => array('mode')
+    'uparams' => array('mode','theme','dot')
 );
 
 $ViewList['transferuser'] = array(
@@ -281,64 +291,65 @@ $ViewList['blockedusers'] = array(
 
 $ViewList['getstatus'] = array(
     'params' => array(),
-    'uparams' => array('ma','operator','theme','noresponse','priority','disable_pro_active','click','position','hide_offline','check_operator_messages','top','units','leaveamessage','department','identifier'),
-	'multiple_arguments' => array ( 'department' )
+    'uparams' => array('ua','ma','operator','theme','noresponse','priority','disable_pro_active','click','position','hide_offline','check_operator_messages','top','units','leaveamessage','department','identifier','survey','dot'),
+	'multiple_arguments' => array ( 'department', 'ua' )
 );
 
 $ViewList['chatcheckstatus'] = array(
     'params' => array(),
-    'uparams' => array('status','department','vid'),
+    'uparams' => array('status','department','vid','uactiv','wopen','uaction','hash','hash_resume','dot'),
 	'multiple_arguments' => array ( 'department' )
 );
 
-$ViewList['getstatusembed'] = array(
+$ViewList['getstatusembed'] = array (
     'params' => array(),
-    'uparams' => array('operator','theme','hide_offline','leaveamessage','department','priority'),
-	'multiple_arguments' => array ( 'department' )
+    'uparams' => array('ua','operator','theme','hide_offline','leaveamessage','department','priority','survey'),
+	'multiple_arguments' => array ( 'department','ua' )
 );
 
 $ViewList['startchat'] = array (
     'params' => array(),
-    'uparams' => array('switchform','operator','theme','vid','hash_resume','sound','hash','offline','leaveamessage','department','priority','chatprefill'),
-	'multiple_arguments' => array ( 'department' )
+    'uparams' => array('ua','switchform','operator','theme','er','vid','hash_resume','sound','hash','offline','leaveamessage','department','priority','chatprefill','survey','prod','phash','pvhash'),
+	'multiple_arguments' => array ( 'department', 'ua', 'prod' )
 );
 
-$ViewList['chatwidget'] = array(
+$ViewList['chatwidget'] = array (
     'params' => array(),
-    'uparams' => array('switchform','operator','theme','vid','sound','hash','hash_resume','mode','offline','leaveamessage','department','priority','chatprefill'),
-	'multiple_arguments' => array ( 'department' )
+    'uparams' => array('ua','switchform','operator','theme','vid','sound','hash','hash_resume','mode','offline','leaveamessage','department','priority','chatprefill','survey','sdemo','prod','phash','pvhash','fullheight'),
+	'multiple_arguments' => array ( 'department', 'ua', 'prod' )
 );
 
 $ViewList['reopen'] = array(
     'params' => array('chat_id','hash'),
-    'uparams' => array('mode','embedmode','theme'),
+    'uparams' => array('mode','embedmode','theme','fullheight'),
 );
 
 $ViewList['readoperatormessage'] = array(
     'params' => array(),
-    'uparams' => array('operator','theme','priority','vid','department','playsound'),
-	'multiple_arguments' => array ( 'department' )
+    'uparams' => array('operator','theme','priority','vid','department','playsound','ua','survey','fullheight'),
+	'multiple_arguments' => array ( 'department', 'ua' )
 );
 
 $ViewList['chatcheckoperatormessage'] = array(
     'params' => array(),
-    'uparams' => array('tz','operator','theme','priority','vid','count_page','identifier','department'),
-	'multiple_arguments' => array ( 'department' )
+    'uparams' => array('tz','operator','theme','priority','vid','count_page','identifier','department','ua','survey','uactiv','wopen','fullheight'),
+	'multiple_arguments' => array ( 'department','ua' )
 );
 
 $ViewList['logpageview'] = array(
     'params' => array(),
-    'uparams' => array('tz','vid','identifier','department'),
-	'multiple_arguments' => array ( 'department' )
+    'uparams' => array('tz','vid','identifier','department','ua','uactiv','wopen'),
+	'multiple_arguments' => array ( 'department','ua' )
 );
 
 $ViewList['chatwidgetclosed'] = array(
     'params' => array(),
-    'uparams' => array('vid','hash'),
+    'uparams' => array('vid','hash','eclose'),
 );
 
 $ViewList['chat'] = array(
-    'params' => array('chat_id','hash','theme')
+    'params' => array('chat_id','hash'),
+    'uparams' => array('theme','er','survey')
 );
 
 $ViewList['printchat'] = array(
@@ -346,6 +357,10 @@ $ViewList['printchat'] = array(
 );
 
 $ViewList['printchat'] = array(
+    'params' => array('chat_id','hash')
+);
+
+$ViewList['chatpreview'] = array(
     'params' => array('chat_id','hash')
 );
 
@@ -355,15 +370,16 @@ $ViewList['bbcodeinsert'] = array(
 
 $ViewList['chatwidgetchat'] = array(
     'params' => array('chat_id','hash'),
-	'uparams' => array('sound','mode','theme','cstarted')
+	'uparams' => array('sound','mode','theme','cstarted','survey','pchat','fullheight')
 );
 
 $ViewList['userclosechat'] = array(
-    'params' => array('chat_id','hash')
+    'params' => array('chat_id','hash','eclose')
 );
 
 $ViewList['onlineusers'] = array(
     'params' => array(),
+    'ajax' => true,
     'uparams' => array('clear_list','method','deletevisitor','timeout','csfr','department','maxrows'),
     'functions' => array( 'use_onlineusers' )
 );
@@ -388,7 +404,7 @@ $ViewList['sendnotice'] = array(
 $ViewList['geoconfiguration'] = array(
     'params' => array(),
     'uparams' => array(),
-    'functions' => array( 'administrateconfig' )
+    'functions' => array( 'administrategeoconfig' )
 );
 
 $ViewList['listchatconfig'] = array(
@@ -438,11 +454,6 @@ $ViewList['geoadjustment'] = array(
     'functions' => array( 'geoadjustment' )
 );
 
-$ViewList['statistic'] = array(
-    'params' => array(),
-    'functions' => array( 'viewstatistic' )
-);
-
 $ViewList['accept'] = array(
     'params' => array('hash','validation_hash','email')
 );
@@ -451,29 +462,38 @@ $ViewList['sendchat'] = array(
 		'params' => array('chat_id','hash')
 );
 
+$ViewList['transferchatrefilter'] = array(
+    'params' => array('chat_id'),
+    'functions' => array( 'use' )
+);
+
 $FunctionList['use'] = array('explain' => 'General permission to use chat module');
-$FunctionList['singlechatwindow'] = array('explain' =>'Allow user to use single chat window functionality');
-$FunctionList['allowchattabs'] = array('explain' =>'Allow user to user chat rooms functionality');
-$FunctionList['deletechat'] = array('explain' =>'Allow user to delete his own chats');
+$FunctionList['singlechatwindow'] = array('explain' =>'Allow operator to use single chat window functionality');
+$FunctionList['allowchattabs'] = array('explain' =>'Allow operator to user chat rooms functionality');
+$FunctionList['deletechat'] = array('explain' =>'Allow operator to delete his own chats');
 $FunctionList['deleteglobalchat'] = array('explain' =>'Allow to delete all chats');
 $FunctionList['allowtransfer'] = array('explain' =>'Allow user to transfer chat to another user');
-$FunctionList['allowcloseremote'] = array('explain' =>'Allow user to close another user chat');
-$FunctionList['allowblockusers'] = array('explain' =>'Allow user to block visitors');
+$FunctionList['allowcloseremote'] = array('explain' =>'Allow operator to close another operator chat');
+$FunctionList['allowblockusers'] = array('explain' =>'Allow operator to block visitors');
 $FunctionList['administrateconfig'] = array('explain' =>'Allow to change chat config');
-$FunctionList['allowclearonlinelist'] = array('explain' =>'Allow user to clean online users list');
-$FunctionList['administratecannedmsg'] = array('explain' =>'Allow user change canned messages');
-$FunctionList['allowopenremotechat'] = array('explain' =>'Allow user to open other users chats from same department');
-$FunctionList['allowreopenremote'] = array('explain' =>'Allow user to reopen other users chats');
-$FunctionList['allowtransfertoanyuser'] = array('explain' =>'Allow user to transfer chat to any online user, not only his own department users');
-$FunctionList['viewstatistic'] = array('explain' =>'Allow user to view statistic');
-$FunctionList['use_onlineusers'] = array('explain' =>'Allow user to view online visitors');
-$FunctionList['chattabschrome'] = array('explain' =>'Allow user to user chrome extension');
-$FunctionList['canchangechatstatus'] = array('explain' =>'Allow user to change chat status');
-$FunctionList['administrateinvitations'] = array('explain' =>'Allow user to change pro active invitations');
-$FunctionList['administrateresponder'] = array('explain' =>'Allow user to change auto responder');
-$FunctionList['maintenance'] = array('explain' =>'Allow user to run maintenance');
+$FunctionList['allowclearonlinelist'] = array('explain' =>'Allow operator to clean online users list');
+$FunctionList['administratecannedmsg'] = array('explain' =>'Allow operator change canned messages');
+$FunctionList['allowopenremotechat'] = array('explain' =>'Allow operator to open other operators chats from same department');
+$FunctionList['allowreopenremote'] = array('explain' =>'Allow operator to reopen other operators chats');
+$FunctionList['allowtransfertoanyuser'] = array('explain' =>'Allow operator to transfer chat to any online operator, not only his own department users');
+$FunctionList['use_onlineusers'] = array('explain' =>'Allow operator to view online visitors');
+$FunctionList['chattabschrome'] = array('explain' =>'Allow operator to use chrome extension');
+$FunctionList['canchangechatstatus'] = array('explain' =>'Allow operator to change chat status');
+$FunctionList['administrateinvitations'] = array('explain' =>'Allow operator to change pro active invitations');
+$FunctionList['administrateresponder'] = array('explain' =>'Allow operator to change auto responder');
+$FunctionList['maintenance'] = array('explain' =>'Allow operator to run maintenance');
 $FunctionList['sees_all_online_visitors'] = array('explain' =>'Operator can see all online visitors, not only his department');
-$FunctionList['geoadjustment'] = array('explain' =>'Allow user to edit geo adjustment for chat status');
+$FunctionList['geoadjustment'] = array('explain' => 'Allow operator to edit geo adjustment for chat status');
+$FunctionList['take_screenshot'] = array('explain' => 'Allow operator to take visitor browser page screenshots');
+$FunctionList['modifychat'] = array('explain' => 'Allow operator modify main chat information');
+$FunctionList['allowredirect'] = array('explain' => 'Allow operator to redirect user to another page');
+$FunctionList['administrategeoconfig'] = array('explain' => 'Allow operator to edit geo detection configuration');
+$FunctionList['manage_product'] = array('explain' => 'Allow operator to manage products');
 
 
 ?>

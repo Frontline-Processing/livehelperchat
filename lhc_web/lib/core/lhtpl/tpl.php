@@ -75,12 +75,17 @@ class erLhcoreClassTemplate {
         return self::$instance;
     }
 
+    public function enableCache($enable) {
+        $this->templatecompile = $enable;
+        $this->cacheEnabled = $enable;
+    }
+    
     /**
      * Constructor
      *
      * @param $file string the file name you want to load
      */
-    function erLhcoreClassTemplate($file = null) {
+    function __construct($file = null) {
 
     	    	
         $cfg = erConfigClassLhConfig::getInstance();
@@ -209,9 +214,9 @@ class erLhcoreClassTemplate {
 	        $contentFile = php_strip_whitespace($file);
 
 	        // Compile templates - 3 level of inclusions
-	        for ($i = 0; $i < 3; $i++) {
+	        for ($i = 0; $i < 9; $i++) {
     	        $Matches = array();
-    			preg_match_all('/<\?php(.*?)include_once\(erLhcoreClassDesign::designtpl\(\'([a-zA-Z0-9-\.-\/\_]+)\'\)\)(.*?)\?\>/i',$contentFile,$Matches);
+    			preg_match_all('/<\?php(\s*)include_once\(erLhcoreClassDesign::designtpl\(\'([a-zA-Z0-9-\.-\/\_]+)\'\)\)(.*?)\?\>/i',$contentFile,$Matches);
     			foreach ($Matches[2] as $key => $Match)
     			{
     				$contentFile = str_replace($Matches[0][$key],php_strip_whitespace(erLhcoreClassDesign::designtpl($Match)),$contentFile);
@@ -219,7 +224,7 @@ class erLhcoreClassTemplate {
 
     	        //Compile templates inclusions first level.
     	        $Matches = array();
-    			preg_match_all('/<\?php(.*?)include\(erLhcoreClassDesign::designtpl\(\'([a-zA-Z0-9-\.-\/\_]+)\'\)\)(.*?)\?\>/i',$contentFile,$Matches);
+    			preg_match_all('/<\?php(\s*)include\(erLhcoreClassDesign::designtpl\(\'([a-zA-Z0-9-\.-\/\_]+)\'\)\)(.*?)\?\>/i',$contentFile,$Matches);
     			foreach ($Matches[2] as $key => $Match)
     			{
     				$contentFile = str_replace($Matches[0][$key],php_strip_whitespace(erLhcoreClassDesign::designtpl($Match)),$contentFile);
@@ -238,20 +243,20 @@ class erLhcoreClassTemplate {
 
 			//Compile translations, pure translations
 			$Matches = array();
-			preg_match_all('/<\?php echo erTranslationClassLhTranslation::getInstance\(\)->getTranslation\(\'(.*?)\',\'(.*?)\'\)(.*?)\?\>/i',$contentFile,$Matches);
+			preg_match_all('/<\?php echo erTranslationClassLhTranslation::getInstance\(\)->getTranslation\(\'(.*?)\',(.*?)\'(.*?)\'\)(.*?)\?\>/i',$contentFile,$Matches);
 
 			foreach ($Matches[1] as $key => $TranslateContent)
 			{
-				$contentFile = str_replace($Matches[0][$key],erTranslationClassLhTranslation::getInstance()->getTranslation($TranslateContent,$Matches[2][$key]),$contentFile);
+				$contentFile = str_replace($Matches[0][$key],erTranslationClassLhTranslation::getInstance()->getTranslation($TranslateContent,$Matches[3][$key]),$contentFile);
 			}
 
 			//Translations used in logical conditions
 			$Matches = array();
-			preg_match_all('/erTranslationClassLhTranslation::getInstance\(\)->getTranslation\(\'(.*?)\',\'(.*?)\'\)/i',$contentFile,$Matches);
+			preg_match_all('/erTranslationClassLhTranslation::getInstance\(\)->getTranslation\(\'(.*?)\',(.*?)\'(.*?)\'\)/i',$contentFile,$Matches);
 
 			foreach ($Matches[1] as $key => $TranslateContent)
 			{
-				$contentFile = str_replace($Matches[0][$key],'\''.erTranslationClassLhTranslation::getInstance()->getTranslation($TranslateContent,$Matches[2][$key]).'\'',$contentFile);
+				$contentFile = str_replace($Matches[0][$key],'\''.erTranslationClassLhTranslation::getInstance()->getTranslation($TranslateContent,$Matches[3][$key]).'\'',$contentFile);
 			}
 
 			// Compile url addresses
@@ -527,7 +532,7 @@ class erLhcoreClassTemplate {
 	{
 		@extract($this->vars,EXTR_REFS);        // Extract the vars to local namespace
         ob_start();                             // Start output buffering
-        $result = @include($file);               // Include the file
+        $result = include($file);               // Include the file
         if ($result === false) {                 // Make sure file was included succesfuly
             throw new Exception("File inclusion failed"); // Throw exception if failed, so tpl compiler will recompile template
         }

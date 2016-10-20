@@ -15,11 +15,13 @@ return array (
       'templatecompile' => false,
       'modulecompile' => false,
       'force_virtual_host' => false,
+      'one_login_per_account' => false,
       'time_zone' => '',
       'date_format' => 'Y-m-d',
       'date_hour_format' => 'H:i:s',
       'date_date_hour_format' => 'Y-m-d H:i:s',
       'default_site_access' => 'eng',
+      'maps_api_key' => false,
       'extensions' =>
           array (
             // 0 => 'customstatus',
@@ -54,7 +56,8 @@ return array (
       	25 => 'geo',
       	26 => 'fin',
       	27 => 'alb',
-      	28 => 'site_admin'
+      	28 => 'heb',
+      	29 => 'site_admin'
       ),
     ),
     'default_url' =>
@@ -86,7 +89,8 @@ return array (
   	'redis' => array (
   				'server' => array (
   						'host' => 'localhost',
-  						'port' => 6379
+  						'port' => 6379,
+                        'database' => 0
   				)
   	),
     'db' =>
@@ -612,7 +616,24 @@ return array (
     		'module' => 'chat',
     		'view' => 'startchat'
     	),
-      ),	
+      ),
+      'heb' => array (
+        'locale' => 'he_HE',
+        'content_language' => 'he',
+        'dir_language' => 'rtl',
+        'title' => '',
+        'description' => '',
+        'theme' =>
+            array (
+              0 => 'customtheme',
+              1 => 'defaulttheme'
+        ),
+        'default_url' =>
+            array (
+                'module' => 'chat',
+                'view' => 'startchat'
+            ),
+       ),
       'site_admin' =>
       array (
         'locale' => 'en_EN',

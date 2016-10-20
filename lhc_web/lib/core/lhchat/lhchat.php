@@ -17,7 +17,7 @@ class erLhcoreClassChat {
 			'user_typing_txt',
 			'hash',
 			'ip',
-			'user_status',
+			//'user_status',
 			'email',
 			'support_informed',
 			'phone',
@@ -37,7 +37,7 @@ class erLhcoreClassChat {
 			'wait_time',
 			'chat_duration',
 			'priority',
-			'online_user_id',
+			//'online_user_id',
 			'transfer_if_na',
 			'transfer_timeout_ts',
 			'transfer_timeout_ac',
@@ -50,16 +50,21 @@ class erLhcoreClassChat {
 			'operator_typing_id',
 			'chat_initiator',
 			'chat_variables',
+			'wait_timeout_repeat',
 			// Angular remake
-			'referrer'
+			'referrer',
+			'last_op_msg_time',
+			'has_unread_op_messages',
+			'unread_op_messages_informed',
+			//'product_id'
 	);
 	
     /**
      * Gets pending chats
      */
-    public static function getPendingChats($limit = 50, $offset = 0, $filterAdditional = array())
+    public static function getPendingChats($limit = 50, $offset = 0, $filterAdditional = array(), $filterAdditionalMainAttr = array(), $limitationDepartment = array())
     {
-    	$limitation = self::getDepartmentLimitation();
+    	$limitation = self::getDepartmentLimitation('lh_chat',$limitationDepartment);
 
     	// Does not have any assigned department
     	if ($limitation === false) { return array(); }
@@ -77,7 +82,7 @@ class erLhcoreClassChat {
     	$filter['limit'] = $limit;
     	$filter['offset'] = $offset;
     	$filter['smart_select'] = true;
-    	$filter['sort'] = 'priority DESC, id DESC';
+    	$filter['sort'] = isset($filterAdditionalMainAttr['sort']) ? $filterAdditionalMainAttr['sort'] : 'priority DESC, id DESC';
 
     	if (!empty($filterAdditional)) {
     		$filter = array_merge_recursive($filter,$filterAdditional);
@@ -377,6 +382,18 @@ class erLhcoreClassChat {
     		}
     	}
 
+    	if (isset($params['leftjoin']) && count($params['leftjoin']) > 0) {
+    	    foreach ($params['leftjoin'] as $table => $joinOn) {
+    	        $q->leftJoin($table, $q->expr->eq($joinOn[0], $joinOn[1]));
+    	    }
+    	}
+    	
+    	if (isset($params['innerjoin']) && count($params['innerjoin']) > 0) {
+    	    foreach ($params['innerjoin'] as $table => $joinOn) {
+    	        $q->innerJoin($table, $q->expr->eq($joinOn[0], $joinOn[1]));
+    	    }
+    	}
+    	
     	if ( count($conditions) > 0 )
     	{
 	    	$q->where( $conditions );
@@ -394,13 +411,23 @@ class erLhcoreClassChat {
     	return $result;
     }
 
-    public static function getDepartmentLimitation($tableName = 'lh_chat') {
-    	$currentUser = erLhcoreClassUser::instance();
+    public static function getDepartmentLimitation($tableName = 'lh_chat', $params = array()) {
+    	
     	$LimitationDepartament = '';
-    	$userData = $currentUser->getUserData(true);
+    	
+    	if (!isset($params['user'])) {
+        	$currentUser = erLhcoreClassUser::instance();
+        	$userData = $currentUser->getUserData(true);
+        	$userId = $currentUser->getUserID();
+    	} else {
+    	    $userData = $params['user'];
+    	    $userId = $userData->id;
+    	}
+    	
+    	
     	if ( $userData->all_departments == 0 )
     	{
-    		$userDepartaments = erLhcoreClassUserDep::getUserDepartaments($currentUser->getUserID());
+    		$userDepartaments = erLhcoreClassUserDep::getUserDepartaments($userId);
 
     		if (count($userDepartaments) == 0) return false;
 
@@ -537,7 +564,7 @@ class erLhcoreClassChat {
     	$filter['limit'] = $limit;
     	$filter['offset'] = $offset;
     	$filter['smart_select'] = true;
-
+    	
     	if (!empty($filterAdditional)) {
     		$filter = array_merge_recursive($filter,$filterAdditional);
     	}
@@ -677,6 +704,40 @@ class erLhcoreClassChat {
        }
 
        return $rowsNumber >= 1;
+    }
+
+    /**
+     * Returns departments with atleast one logged 
+     */
+    public static function getLoggedDepartmentsIds($departmentsIds, $exclipic = false)
+    {
+        $isOnlineUser = (int)erLhcoreClassModelChatConfig::fetch('sync_sound_settings')->data['online_timeout'];
+
+        $db = ezcDbInstance::get();
+
+        if ($exclipic == true)
+        {
+            $stmt = $db->prepare("SELECT dep_id AS found FROM lh_userdep WHERE (last_activity > :last_activity AND hide_online = 0) AND dep_id IN (" . implode(',', $departmentsIds) . ")");
+            $stmt->bindValue(':last_activity',(time()-$isOnlineUser),PDO::PARAM_INT);
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        } else {
+            
+            $stmt = $db->prepare("SELECT count(id) AS found FROM lh_userdep WHERE (last_activity > :last_activity AND hide_online = 0) AND (dep_id = 0 OR dep_id IN (" . implode(',', $departmentsIds) . "))");
+            $stmt->bindValue(':last_activity',(time()-$isOnlineUser),PDO::PARAM_INT);
+            $stmt->execute();
+            
+            $rowsNumber = $stmt->fetchColumn();
+            
+            // Return same departments because one of operators are online and has assigned all departments
+            if ($rowsNumber > 0) {
+                return $departmentsIds;
+            } else {
+                return array();
+            }
+        }
     }
 
     public static function getRandomOnlineUserID($params = array()) {
@@ -910,7 +971,7 @@ class erLhcoreClassChat {
 
             if (in_array($chat->dep_id,$userDepartaments)) {
 
-            	if ($currentUser->hasAccessTo('lhchat','allowopenremotechat') == true){
+            	if ($currentUser->hasAccessTo('lhchat','allowopenremotechat') == true || $chat->status == erLhcoreClassModelChat::STATUS_OPERATORS_CHAT){
             		return true;
             	} elseif ($chat->user_id == 0 || $chat->user_id == $currentUser->getUserID()) {
             		return true;
@@ -1013,7 +1074,7 @@ class erLhcoreClassChat {
    }
    
    public static function closeChatCallback($chat, $operator = false) {
-	   	$extensions = erConfigClassLhConfig::getInstance()->getSetting( 'site', 'extensions' );
+	   	$extensions = erConfigClassLhConfig::getInstance()->getOverrideValue( 'site', 'extensions' );
 
 	   	$instance = erLhcoreClassSystem::instance();
 
@@ -1026,14 +1087,34 @@ class erLhcoreClassChat {
 	   	
 	   	erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.close',array('chat' => & $chat, 'user_data' => $operator));
 	   	
-	   	if ( ($dep = $chat->department) !== false && $dep->inform_close == 1) {
+	   	$dep = $chat->department;
+	   	
+	   	if ( $dep !== false) {
+	   	    self::updateDepartmentStats($dep);
+	   	}
+	   	
+	   	if ( $dep !== false && $dep->inform_close == 1) {
 	   		erLhcoreClassChatMail::informChatClosed($chat, $operator);
 	   	}
    }
 
+   /**
+    * Update department main statistic for frontend
+    * */
+   public static function updateDepartmentStats($dep) {
+       $db = ezcDbInstance::get();
+       $stmt = $db->prepare('UPDATE lh_departament SET active_chats_counter = :active_chats_counter, pending_chats_counter = :pending_chats_counter, closed_chats_counter = :closed_chats_counter WHERE id = :id');
+       $stmt->bindValue(':active_chats_counter',erLhcoreClassChat::getCount(array('filter' => array('dep_id' => $dep->id, 'status' => erLhcoreClassModelChat::STATUS_ACTIVE_CHAT))),PDO::PARAM_INT);
+       $stmt->bindValue(':pending_chats_counter',erLhcoreClassChat::getCount(array('filter' => array('dep_id' => $dep->id, 'status' => erLhcoreClassModelChat::STATUS_PENDING_CHAT))),PDO::PARAM_INT);
+       $stmt->bindValue(':closed_chats_counter',erLhcoreClassChat::getCount(array('filter' => array('dep_id' => $dep->id, 'status' => erLhcoreClassModelChat::STATUS_CLOSED_CHAT))),PDO::PARAM_INT);
+       $stmt->bindValue(':id',$dep->id,PDO::PARAM_INT);
+       $stmt->execute();
+       
+   }
+   
    public static function canReopen(erLhcoreClassModelChat $chat, $skipStatusCheck = false) {
    		if ( ($chat->status == erLhcoreClassModelChat::STATUS_CLOSED_CHAT || $skipStatusCheck == true)) {
-			if ($chat->last_user_msg_time > time()-600 || $chat->last_user_msg_time == 0){
+			if (($chat->status_sub != erLhcoreClassModelChat::STATUS_SUB_USER_CLOSED_CHAT || $skipStatusCheck == true) && ($chat->last_user_msg_time > time()-600 || $chat->last_user_msg_time == 0)) {
 				return true;
 			} else {
 				return false;
@@ -1048,7 +1129,7 @@ class erLhcoreClassChat {
 		   		$parts = explode('_', $chatPart);
 		   		$chat = erLhcoreClassModelChat::fetch($parts[0]);
 		   		
-		   		if ( ($chat->last_user_msg_time > time()-600 || $chat->last_user_msg_time == 0) && (!isset($params['reopen_closed']) || $params['reopen_closed'] == 1 || ($params['reopen_closed'] == 0 && $chat->status != erLhcoreClassModelChat::STATUS_CLOSED_CHAT))) {
+		   		if (($chat->status_sub != erLhcoreClassModelChat::STATUS_SUB_USER_CLOSED_CHAT) && ($chat->last_user_msg_time > time()-600 || $chat->last_user_msg_time == 0) && (!isset($params['reopen_closed']) || $params['reopen_closed'] == 1 || ($params['reopen_closed'] == 0 && $chat->status != erLhcoreClassModelChat::STATUS_CLOSED_CHAT))) {
 		   			return array('id' => $parts[0],'hash' => $parts[1]);
 		   		} else {
 					return false;
@@ -1074,6 +1155,14 @@ class erLhcoreClassChat {
    			foreach ($attrRemove as $attr) {
    				$object->{$attr} = null;
    			};
+   			
+   			if (isset($params['remove_all']) && $params['remove_all'] == true) {
+   			    foreach ($object as $attr => $value) {
+   			        if (!in_array($attr, $attrs)) {
+   			            $object->$attr = null;
+   			        }
+   			    }
+   			}
    			
    			if (!isset($params['do_not_clean']))
    			$object = (object)array_filter((array)$object);
@@ -1101,6 +1190,353 @@ class erLhcoreClassChat {
    		foreach ($params as & $param) {
    			$param = (int)$param;
    		}
+   }
+   
+   /*
+    * Example of call
+    * This method can prefill first and second level objects without
+    * requirement for each object to be fetched separately
+    * Increases performance drastically
+   erLhcoreClassModuleFunctions::prefillObjects($items, array(
+       array(
+           'order_id',
+           'order',
+           'dommyClass::getList'
+       ),      
+       array(
+           'status_id',
+           'status',
+           'dommyClass::getList'
+       ),
+       array(
+           array(
+               'order',
+               'registration_id'
+           ),
+           array(
+               'order',
+               'registration'
+           ),
+           'dommyClass::getList',
+           'id'
+       )
+   ));
+   */
+   public static function prefillObjects(& $objects, $attrs = array(), $params = array())
+   {
+       $cache = CSCacheAPC::getMem();
+   
+       foreach ($attrs as $attr) {
+           $ids = array();
+           foreach ($objects as $object) {
+               if (is_array($attr[0])) {
+                   if (is_object($object->{$attr[0][0]}) && $object->{$attr[0][0]}->{$attr[0][1]} > 0) {
+                       $ids[] = $object->{$attr[0][0]}->{$attr[0][1]};
+                   }
+               } else {
+                   if ($object->{$attr[0]} > 0) {
+                       $ids[] = $object->{$attr[0]};
+                   }
+               }
+           }
+   
+           $ids = array_unique($ids);
+   
+           if (! empty($ids)) {
+   
+               // First try to fetch from memory
+               if (isset($params['use_cache'])) {
+                   list ($class) = explode('::', $attr[2]);
+                   $class = strtolower($class);
+   
+                   $cacheKeyPrefix = $cache->cacheGlobalKey . 'object_' . $class . '_';
+                   $cacheKeyPrefixStore = 'object_' . $class . '_';
+   
+                   $cacheKeys = array();
+                   foreach ($ids as $id) {
+                       $cacheKeys[] = $cacheKeyPrefix . $id;
+                   }
+   
+                   $cachedObjects = $cache->restoreMulti($cacheKeys);
+   
+                   if (! empty($cachedObjects)) {
+                       foreach ($objects as & $item) {
+                           if (is_array($attr[0])) {
+                               if (isset($cachedObjects[$cacheKeyPrefix . $item->{$attr[0][0]}->{$attr[0][1]}]) && $cachedObjects[$cacheKeyPrefix . $item->{$attr[0][0]}->{$attr[0][1]}] !== false) {
+                                   $item->{$attr[1][0]}->{$attr[1][1]} = $cachedObjects[$cacheKeyPrefix . $item->{$attr[0][0]}->{$attr[0][1]}];
+                                   $key = array_search($item->{$attr[0][0]}->{$attr[0][1]}, $ids);
+                                   if ($key !== false) {
+                                       unset($ids[$key]);
+                                   }
+                               }
+                           } else {
+                               if (isset($cachedObjects[$cacheKeyPrefix . $item->{$attr[0]}]) && $cachedObjects[$cacheKeyPrefix . $item->{$attr[0]}] !== false) {
+                                   $item->{$attr[1]} = $cachedObjects[$cacheKeyPrefix . $item->{$attr[0]}];
+                                   $key = array_search($item->{$attr[0]}, $ids);
+                                   if ($key !== false) {
+                                       unset($ids[$key]);
+                                   }
+                               }
+                           }
+                       }
+                   }
+               }
+   
+               // Check again that ID's were not filled
+               if (! empty($ids)) {
+                   $filter_attr = 'id';
+   
+                   if (isset($attr[3]) && $attr[3]) {
+                       $filter_attr = $attr[3];
+                   }
+   
+                   $objectsPrefill = call_user_func($attr[2], array(
+                       'limit' => false,
+                       'filterin' => array(
+                           $filter_attr => $ids
+                       )
+                   ));
+   
+                   if ($filter_attr != 'id') {
+                       $objectsPrefillNew = array();
+                       foreach ($objectsPrefill as $key => $value) {
+                           $objectsPrefillNew[$value->$filter_attr] = $value;
+                       }
+                       $objectsPrefill = $objectsPrefillNew;
+                   }
+   
+                   foreach ($objects as & $item) {
+   
+                       if (is_array($attr[0])) {
+                           if (is_object($item->{$attr[0][0]}) && isset($objectsPrefill[$item->{$attr[0][0]}->{$attr[0][1]}])) {
+                               $item->{$attr[1][0]}->{$attr[1][1]} = $objectsPrefill[$item->{$attr[0][0]}->{$attr[0][1]}];
+   
+                               if (isset($params['use_cache']) && $params['use_cache'] == true) {
+                                   $cache->store($cacheKeyPrefixStore . $item->{$attr[0][0]}->{$attr[0][1]}, $objectsPrefill[$item->{$attr[0][0]}->{$attr[0][1]}]);
+                               }
+                           }
+                       } else {
+                           if (isset($objectsPrefill[$item->{$attr[0]}])) {
+   
+                               $item->{$attr[1]} = $objectsPrefill[$item->{$attr[0]}];
+   
+                               if (isset($params['fill_cache']) && $params['fill_cache'] == true) {
+                                   $GLOBALS[get_class($objectsPrefill[$item->{$attr[0]}]) . '_' . $item->{$attr[0]}] = $item->{$attr[1]};
+                               }
+   
+                               if (isset($params['use_cache']) && $params['use_cache'] == true) {
+                                   $cache->store($cacheKeyPrefixStore . $item->{$attr[0]}, $objectsPrefill[$item->{$attr[0]}]);
+                               }
+                           }
+                       }
+                   }
+               }
+           }
+       }
+   }
+   
+   /**
+    * Sets chats status directly
+    * */
+   public static function setOnlineStatusDirectly($chatLists)
+   {
+       $onlineUserId = array();
+        
+       foreach ($chatLists as $chat) {
+           if (isset($chat->online_user_id) && $chat->online_user_id > 0) {
+               $onlineUserId[] = (int)$chat->online_user_id;
+           }
+       }
+        
+       if (!empty($onlineUserId)) {
+           $response = erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.setonlinestatus_directly',array('list' => & $chatLists, 'online_users_id' => $onlineUserId));
+            
+           // Event listener has done it's job
+           if (isset($response['status']) && $response['status'] === erLhcoreClassChatEventDispatcher::STOP_WORKFLOW) {
+               return ;
+           }
+   
+           $onlineVisitors = erLhcoreClassModelChatOnlineUser::getList( array (
+               'sort' => false,
+               'filterin' => array (
+                   'id' => $onlineUserId
+               )
+           ), array (
+               'vid',
+               'current_page',
+               'invitation_seen_count',
+               'page_title',
+               'chat_id',
+               'last_visit',
+               'first_visit',
+               'user_agent',
+               'user_country_name',
+               'user_country_code',
+               'operator_message',
+               'operator_user_id',
+               'operator_user_proactive',
+               'message_seen',
+               'message_seen_ts',
+               'pages_count',
+               'tt_pages_count',
+               'lat',
+               'lon',
+               'city',
+               'identifier',
+               'time_on_site',
+               'tt_time_on_site',
+               'referrer',
+               'invitation_id',
+               'total_visits',
+               'invitation_count',
+               'requires_email',
+               'requires_username',
+               'requires_phone',
+               'dep_id',
+               'reopen_chat',
+               'operation',
+               'operation_chat',
+               'screenshot_id',
+               'online_attr',
+               'online_attr_system',
+               'visitor_tz',
+               'notes'
+           ));
+   
+           foreach ($chatLists as & $chat) {
+               if (isset($chat->online_user_id) && $chat->online_user_id > 0 && isset($onlineVisitors[$chat->online_user_id])) {
+                   $chat->user_status_front = self::setActivityByChatAndOnlineUser($chat, $onlineVisitors[$chat->online_user_id]);
+               } else {
+                   $chat->user_status_front = 1;
+               }
+           }
+       }
+   }
+   
+   /**
+    * Sets chat's status by online visitors records in efficient way
+    * */
+   public static function setOnlineStatus($chatLists) {
+       $onlineUserId = array();
+       foreach ($chatLists as $chatList) {
+           foreach ($chatList as $chat) {               
+               if (isset($chat->online_user_id) && $chat->online_user_id > 0) {
+                   $onlineUserId[] = (int)$chat->online_user_id;
+               }
+           }
+       }
+       
+       if (!empty($onlineUserId)) {
+           
+           $response = erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.setonlinestatus',array('list' => & $chatLists, 'online_users_id' => $onlineUserId));
+           
+           // Event listener has done it's job
+           if (isset($response['status']) && $response['status'] === erLhcoreClassChatEventDispatcher::STOP_WORKFLOW) {
+               return ;
+           }
+           
+           $onlineVisitors = erLhcoreClassModelChatOnlineUser::getList( array (
+                'sort' => false,
+                'filterin' => array (
+                    'id' => $onlineUserId
+                )
+            ), array (
+                'vid',
+                'current_page',
+                'invitation_seen_count',
+                'page_title',
+                'chat_id',
+                'last_visit',
+                'first_visit',
+                'user_agent',
+                'user_country_name',
+                'user_country_code',
+                'operator_message',
+                'operator_user_id',
+                'operator_user_proactive',
+                'message_seen',
+                'message_seen_ts',
+                'pages_count',
+                'tt_pages_count',
+                'lat',
+                'lon',
+                'city',
+                'identifier',
+                'time_on_site',
+                'tt_time_on_site',
+                'referrer',
+                'invitation_id',
+                'total_visits',
+                'invitation_count',
+                'requires_email',
+                'requires_username',
+                'requires_phone',
+                'dep_id',
+                'reopen_chat',
+                'operation',
+                'operation_chat',
+                'screenshot_id',
+                'online_attr',
+                'online_attr_system',
+                'visitor_tz',
+                'notes'
+            ));
+           
+           foreach ($chatLists as & $chatList) {
+               foreach ($chatList as & $chat) {
+                   if (isset($chat->online_user_id) && $chat->online_user_id > 0 && isset($onlineVisitors[$chat->online_user_id])) {
+                       $chat->user_status_front = self::setActivityByChatAndOnlineUser($chat, $onlineVisitors[$chat->online_user_id]);
+                   } else {
+                       $chat->user_status_front = 1;
+                   }                   
+               }
+           }           
+       }
+   }
+   
+   /**
+    * @desc Returns user status based on the following logic
+    * 1. Green - if widget is not closed
+    * 2. Green - if widget is closed and user activity tracking enabled and user still on site and he is active
+    * 3. Green - if widget is closed and user activity tracking is disabled, but we still receive pings and from last user message has not passed 5 minutes
+    *
+    * 4. Yellow - if widget is closed and user activity tracking enabled, but user is not active but he is still on site
+    * 5. Yellow - from last user message has passed 5 minutes but user still on site
+    *
+    * 6. Widget is closed and we could not determine online user || None of above conditions are met.
+    *
+    * If user activity tracking is enabled but status checking not we default to 10 seconds status checks timeout
+    *
+    * @param array $params
+    *
+    * 1 GREEN user has activity in last 5 minutes and ping respond
+    * 2 ORANGE user has no activity in last 5 minutes and ping respond
+    * 3 GREY Offline user fails to respond pings for X number of times in a row
+    *
+    * @return int
+    */
+   public static function setActivityByChatAndOnlineUser($chat, erLhcoreClassModelChatOnlineUser $onlineUser)
+   {
+        $user_status_front = (!isset($chat->user_status) || $chat->user_status == erLhcoreClassModelChat::USER_STATUS_JOINED_CHAT) ? 0 : 1;
+        
+        if (($user_status_front == erLhcoreClassModelChat::USER_STATUS_CLOSED_CHAT) || (erLhcoreClassChat::$onlineCondition == 1)) {
+           $timeout = (int)erLhcoreClassChat::$trackTimeout || 10;
+           if (erLhcoreClassChat::$trackActivity == true) {
+               if ($onlineUser->last_check_time_ago < ($timeout+10) && isset($onlineUser->user_active) && $onlineUser->user_active == 1) { //User still on site, it does not matter that he have closed widget.
+                   $user_status_front = 0;
+               } elseif ((!isset($onlineUser->user_active) || $onlineUser->user_active == 0) && $onlineUser->last_check_time_ago < ($timeout+10)) {
+                   $user_status_front = 2;
+               }
+           } else {
+               if ($onlineUser->last_check_time_ago < ($timeout+10) && time()-$chat->last_user_msg_time < 300) { //User still on site, it does not matter that he have closed widget.
+                   $user_status_front = 0;
+               } elseif (isset($chat->last_user_msg_time) && time()-$chat->last_user_msg_time >= 300 && $onlineUser->last_check_time_ago < ($timeout+10)) {
+                   $user_status_front = 2;                 
+               }
+           }
+        }
+        
+        return $user_status_front;
    }
    
    public static function updateActiveChats($user_id)
@@ -1190,6 +1626,58 @@ class erLhcoreClassChat {
 	   	$time = $stmt->fetchColumn();
    	   	return $time > 0 ? $time : 0;   		
    }
+   
+   /**
+    * @see https://github.com/LiveHelperChat/livehelperchat/pull/809
+    *
+    * @param array $value
+    * */
+   public static function safe_json_encode($value) {
+        
+       $encoded = json_encode($value);
+        
+       switch (json_last_error()) {
+           case JSON_ERROR_NONE:
+               return $encoded;
+           case JSON_ERROR_DEPTH:
+               return 'Maximum stack depth exceeded'; // or trigger_error() or throw new Exception()
+           case JSON_ERROR_STATE_MISMATCH:
+               return 'Underflow or the modes mismatch'; // or trigger_error() or throw new Exception()
+           case JSON_ERROR_CTRL_CHAR:
+               return 'Unexpected control character found';
+           case JSON_ERROR_SYNTAX:
+               return 'Syntax error, malformed JSON'; // or trigger_error() or throw new Exception()
+           case JSON_ERROR_UTF8:
+               $clean = self::utf8ize($value);
+               return safe_json_encode($clean);
+           default:
+               return 'Unknown error'; // or trigger_error() or throw new Exception()
+                
+       }
+   }
+    
+   /**
+    * Make conversion if required
+    *
+    * @param unknown $mixed
+    *
+    * @return string
+    */
+   public static function utf8ize($mixed) {
+       if (is_array($mixed)) {
+           foreach ($mixed as $key => $value) {
+               $mixed[$key] = self::utf8ize($value);
+           }
+       } else if (is_string ($mixed)) {
+           return utf8_encode($mixed);
+       }
+       return $mixed;
+   }
+   
+   // Static attribute for class
+   public static $trackActivity = false;
+   public static $trackTimeout = 0;
+   public static $onlineCondition = 0;
    
    private static $persistentSession;
 }

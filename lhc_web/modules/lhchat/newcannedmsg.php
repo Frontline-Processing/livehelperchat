@@ -1,7 +1,9 @@
 <?php
 
+$response = erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.newcannedmsg', array());
+
 $tpl = erLhcoreClassTemplate::getInstance( 'lhchat/newcannedmsg.tpl.php');
-$Departament = new erLhcoreClassModelCannedMsg();
+$CannedMessage = new erLhcoreClassModelCannedMsg();
 
 /**
  * Append user departments filter
@@ -15,69 +17,16 @@ if ( isset($_POST['Cancel_action']) ) {
 
 if (isset($_POST['Save_action']))
 {
-   $definition = array(
-        'Message' => new ezcInputFormDefinitionElement(
-            ezcInputFormDefinitionElement::OPTIONAL, 'unsafe_raw'
-        ),
-        'Position' => new ezcInputFormDefinitionElement(
-            ezcInputFormDefinitionElement::OPTIONAL, 'int',array('min_range' => 0)
-        ),
-        'Delay' => new ezcInputFormDefinitionElement(
-            ezcInputFormDefinitionElement::OPTIONAL, 'int',array('min_range' => 0)
-         ),
-        'DepartmentID' => new ezcInputFormDefinitionElement(
-            ezcInputFormDefinitionElement::OPTIONAL, 'int',array('min_range' => 1)
-        ),
-        'AutoSend' => new ezcInputFormDefinitionElement(
-            ezcInputFormDefinitionElement::OPTIONAL, 'boolean'
-        )
-    );
+    $Errors = erLhcoreClassAdminChatValidatorHelper::validateCannedMessage($CannedMessage, $userDepartments);
 
-    $form = new ezcInputForm( INPUT_POST, $definition );
-    $Errors = array();
+    erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.before_newcannedmsg', array('errors' => & $Errors));
 
-    if ( !$form->hasValidData( 'Message' ) || $form->Message == '' )
-    {
-        $Errors[] =  erTranslationClassLhTranslation::getInstance()->getTranslation('chat/cannedmsg','Please enter a canned message');
-    }
-    
-    if ( $form->hasValidData( 'AutoSend' ) && $form->AutoSend == true )
-    {
-    	$Departament->auto_send = 1;
-    } else {
-    	$Departament->auto_send = 0;
-    }
-    
-    if ( $form->hasValidData( 'Position' )  )
-    {
-    	$Departament->position = $form->Position;
-    }
-
-    if ( $form->hasValidData( 'Delay' )  )
-    {
-    	$Departament->delay = $form->Delay;
-    }
-    
-	if ( $form->hasValidData( 'DepartmentID' )  ) {
-        $Departament->department_id = $form->DepartmentID;        
-        if ($userDepartments !== true) {
-        	if (!in_array($Departament->department_id, $userDepartments)) {
-        		$Errors[] =  erTranslationClassLhTranslation::getInstance()->getTranslation('chat/cannedmsg','Please choose a department');
-        	}
-        }
-    } else {
-    	// User has to choose a department
-    	if ($userDepartments !== true) {    	
-    		$Errors[] =  erTranslationClassLhTranslation::getInstance()->getTranslation('chat/cannedmsg','Please choose a department');    		
-    	} else {
-    		$Departament->department_id = 0;
-    	}
-    }
-    
     if (count($Errors) == 0)
     {
-        $Departament->msg = $form->Message;
-        erLhcoreClassChat::getSession()->save($Departament);
+        $CannedMessage->saveThis();
+        
+        erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.newcannedmsg', array('msg' => & $CannedMessage));
+
         erLhcoreClassModule::redirect('chat/cannedmsg');
         exit ;
 
@@ -86,7 +35,7 @@ if (isset($_POST['Save_action']))
     }
 }
 
-$tpl->set('msg',$Departament);
+$tpl->set('canned_message',$CannedMessage);
 $tpl->set('limitDepartments',$userDepartments !== true ? array('filterin' => array('id' => $userDepartments)) : array());
 
 $Result['content'] = $tpl->fetch();
@@ -95,6 +44,7 @@ $Result['path'] = array(
 array('url' => erLhcoreClassDesign::baseurl('system/configuration'),'title' => erTranslationClassLhTranslation::getInstance()->getTranslation('chat/cannedmsg','System configuration')),
 array('url' => erLhcoreClassDesign::baseurl('chat/cannedmsg'),'title' => erTranslationClassLhTranslation::getInstance()->getTranslation('chat/cannedmsg','Canned messages')),
 array('title' => erTranslationClassLhTranslation::getInstance()->getTranslation('chat/cannedmsg','New canned message')),
-)
+);
 
+erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.newcannedmsg_path',array('result' => & $Result));
 ?>

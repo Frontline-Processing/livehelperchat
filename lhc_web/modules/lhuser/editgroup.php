@@ -9,6 +9,9 @@ if (isset($_POST['Update_group']) )
    $definition = array(
         'Name' => new ezcInputFormDefinitionElement(
             ezcInputFormDefinitionElement::REQUIRED, 'unsafe_raw'
+        ),
+        'Disabled' => new ezcInputFormDefinitionElement(
+            ezcInputFormDefinitionElement::OPTIONAL, 'boolean'
         )
     );
 
@@ -23,6 +26,12 @@ if (isset($_POST['Update_group']) )
     if ( !$form->hasValidData( 'Name' ) || $form->Name == '' )
     {
         $Errors[] =  erTranslationClassLhTranslation::getInstance()->getTranslation('user/editgroup','Please enter a group name');
+    }
+
+    if ( $form->hasValidData( 'Disabled' ) && $form->Disabled == true ) {
+        $Group->disabled = 1;
+    } else {
+        $Group->disabled = 0;
     }
 
     if (count($Errors) == 0)
@@ -107,13 +116,11 @@ $tpl->set('group',$Group);
 
 $Result['content'] = $tpl->fetch();
 
-
 $Result['path'] = array(
 array('url' => erLhcoreClassDesign::baseurl('system/configuration'),'title' => erTranslationClassLhTranslation::getInstance()->getTranslation('user/editgroup','System configuration')),
-
 array('url' => erLhcoreClassDesign::baseurl('user/grouplist'),'title' => erTranslationClassLhTranslation::getInstance()->getTranslation('user/editgroup','Groups')),
-
 array('title' => erTranslationClassLhTranslation::getInstance()->getTranslation('user/editgroup','Group edit').' - '.$Group->name)
-)
+);
 
+erLhcoreClassChatEventDispatcher::getInstance()->dispatch('user.editgroup_path',array('result' => & $Result));
 ?>

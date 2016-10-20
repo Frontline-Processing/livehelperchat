@@ -1,8 +1,10 @@
 <?php
 
-$tpl = erLhcoreClassTemplate::getInstance('lhfaq/new.tpl.php');
-
 $faq = new erLhcoreClassModelFaq();
+
+$response = erLhcoreClassChatEventDispatcher::getInstance()->dispatch('faq.new', array('faq' => $faq));
+
+$tpl = erLhcoreClassTemplate::getInstance('lhfaq/new.tpl.php');
 
 if ( isset($_POST['Save']) )
 {
@@ -13,8 +15,13 @@ if ( isset($_POST['Save']) )
 
 	$Errors = erLhcoreClassFaq::validateFaq($faq);
 
+    erLhcoreClassChatEventDispatcher::getInstance()->dispatch('faq.before_created', array('faq' => & $faq, 'errors' => & $Errors));
+
 	if (count($Errors) == 0) {
 		$faq->saveThis();
+		
+		erLhcoreClassChatEventDispatcher::getInstance()->dispatch('faq.created', array('faq' => & $faq));
+		
 		erLhcoreClassModule::redirect('faq/list');
 		exit;
 	} else {

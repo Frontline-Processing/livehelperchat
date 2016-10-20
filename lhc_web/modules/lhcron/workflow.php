@@ -6,7 +6,6 @@
  * Run every 10 minits or so. On this cron depends automatic chat transfer and unaswered chats callback.
  *
  * */
-
 echo "Starting chat/workflow\n";
 
 if ( erLhcoreClassModelChatConfig::fetch('run_departments_workflow')->current_value == 1 ) {
@@ -43,7 +42,11 @@ echo "Purged chats - ",erLhcoreClassChatWorkflow::automaticChatPurge(),"\n";
 
 foreach (erLhcoreClassChat::getList(array('limit' => 500, 'filter' => array('status' => erLhcoreClassModelChat::STATUS_PENDING_CHAT))) as $chat){
 	erLhcoreClassChatWorkflow::autoAssign($chat,$chat->department);
+	erLhcoreClassChatEventDispatcher::getInstance()->dispatch('chat.pending_process_workflow',array('chat' => & $chat));
 }
+
+// Inform visitors about unread messages
+erLhcoreClassChatWorkflow::autoInformVisitor(erLhcoreClassModelChatConfig::fetch('inform_unread_message')->current_value);
 
 echo "Ended chat/workflow\n";
 
